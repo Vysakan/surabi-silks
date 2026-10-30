@@ -5,8 +5,8 @@ export const banners = [
     subtitle: 'Discover our handcrafted Kanchipuram collection — every thread tells a story.',
     cta: 'Shop Collection',
     link: '/shop/sarees/kanchipuram-silk',
-    image: 'https://placehold.co/1400x600/262626/f9eddb?text=Kanchipuram+Collection',
-    bgColor: '#262626',
+    image: 'https://placehold.co/1400x600/1a1a1a/ffffff?text=Kanchipuram+Collection',
+    bgColor: '#1a1a1a',
   },
   {
     id: 'banner-hero-2',
@@ -14,8 +14,8 @@ export const banners = [
     subtitle: 'Explore the latest Banarasi and Mysore silks — fresh arrivals for every celebration.',
     cta: 'Explore New Arrivals',
     link: '/shop?sort=newest',
-    image: 'https://placehold.co/1400x600/5a350f/f9eddb?text=New+Arrivals',
-    bgColor: '#5a350f',
+    image: 'https://placehold.co/1400x600/8b0310/ffffff?text=New+Arrivals',
+    bgColor: '#8b0310',
   },
   {
     id: 'banner-promo',
@@ -23,7 +23,7 @@ export const banners = [
     subtitle: 'Authentic handwoven textiles, crafted by master artisans across South India.',
     cta: 'Shop Handloom',
     link: '/shop?tag=handloom',
-    image: 'https://placehold.co/700x500/f2d7b0/5a350f?text=Handloom+Edit',
-    bgColor: '#f2d7b0',
+    image: 'https://placehold.co/700x500/fee2e2/8b0310?text=Handloom+Edit',
+    bgColor: '#fee2e2',
   },
 ];
