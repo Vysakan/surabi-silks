@@ -54,8 +54,8 @@ export default function Navbar() {
           </button>
 
           {/* Logo */}
-          <Link to="/" className="text-xl font-semibold tracking-tight text-neutral-900">
-            Surabi <span className="text-primary-500">Silks</span>
+          <Link to="/" className="flex items-center">
+            <img src="/logo.jpg" alt="Surabi Silks" className="h-10 w-auto" />
           </Link>
 
           {/* Desktop nav */}
