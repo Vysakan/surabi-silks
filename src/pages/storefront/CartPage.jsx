@@ -6,6 +6,15 @@ import { FREE_SHIPPING_THRESHOLD, SHIPPING_COST } from '@/lib/constants';
 import Button from '@/components/ui/Button';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import EmptyState from '@/components/ui/EmptyState';
+import { FALLBACK_IMAGE } from '@/lib/constants';
+import { products } from '@/data/products';
+
+function resolveImage(item) {
+  const product = products.find((p) => p.id === item.productId);
+  if (!product) return item.image || FALLBACK_IMAGE;
+  const variant = product.variants.find((v) => v.id === item.variantId);
+  return variant?.images?.[0] || product.variants[0]?.images?.[0] || item.image || FALLBACK_IMAGE;
+}
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, getSubtotal, clearCart } = useCartStore();
@@ -39,7 +48,7 @@ export default function CartPage() {
           {items.map((item) => (
             <div key={item.variantId} className="flex gap-4 p-4 border border-neutral-100 rounded-xl">
               <Link to={`/product/${item.productId}`} className="w-24 h-28 md:w-28 md:h-32 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
-                <img src={item.image} alt={item.productName} className="w-full h-full object-cover" />
+                <img src={resolveImage(item)} alt={item.productName} loading="lazy" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} className="w-full h-full object-cover" />
               </Link>
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm md:text-base font-medium text-neutral-800 truncate">{item.productName}</h3>

@@ -10,7 +10,12 @@ import { formatPrice, formatDate } from '@/lib/formatters';
 
 const STATUS_COLORS = {
   pending: 'warning', confirmed: 'info', processing: 'info',
-  shipped: 'primary', delivered: 'success', cancelled: 'error', returned: 'error',
+  shipped: 'primary', out_for_delivery: 'primary', delivered: 'success', cancelled: 'error',
+};
+
+const STATUS_LABELS = {
+  pending: 'Pending', confirmed: 'Confirmed', processing: 'Processing',
+  shipped: 'Shipped', out_for_delivery: 'Out for Delivery', delivered: 'Delivered', cancelled: 'Cancelled',
 };
 
 export default function OrderHistoryPage() {
@@ -57,7 +62,7 @@ export default function OrderHistoryPage() {
                 <span className="text-sm text-neutral-400 ml-3">{formatDate(order.createdAt)}</span>
               </div>
               <div className="flex items-center gap-3">
-                <Badge color={STATUS_COLORS[order.status]}>{order.status}</Badge>
+                <Badge color={STATUS_COLORS[order.status] || 'info'}>{STATUS_LABELS[order.status] || order.status}</Badge>
                 <ArrowRight size={16} className="text-neutral-300" />
               </div>
             </div>
@@ -65,7 +70,7 @@ export default function OrderHistoryPage() {
               <div className="flex -space-x-2">
                 {order.items.slice(0, 3).map((item, i) => (
                   <div key={i} className="w-10 h-12 rounded-lg overflow-hidden border-2 border-white bg-neutral-100">
-                    <img src={item.image} alt="" className="w-full h-full object-cover" />
+                    <img src={item.image} alt="" loading="lazy" onError={(e) => { e.target.src = '/images/products/fabrics-stack.png'; }} className="w-full h-full object-cover" />
                   </div>
                 ))}
               </div>

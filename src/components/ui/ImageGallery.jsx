@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { cn } from '@/lib/cn';
+import { FALLBACK_IMAGE } from '@/lib/constants';
 
 export default function ImageGallery({ images = [], alt = '' }) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -24,7 +25,7 @@ export default function ImageGallery({ images = [], alt = '' }) {
               i === activeIndex ? 'border-primary-400' : 'border-transparent hover:border-neutral-300'
             )}
           >
-            <img src={img} alt={`${alt} ${i + 1}`} className="w-full h-full object-cover" />
+            <img src={img} alt={`${alt} ${i + 1}`} loading="lazy" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} className="w-full h-full object-cover" />
           </button>
         ))}
       </div>
@@ -34,6 +35,7 @@ export default function ImageGallery({ images = [], alt = '' }) {
           <img
             src={images[activeIndex]}
             alt={alt}
+            onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </div>

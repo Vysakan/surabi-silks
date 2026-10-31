@@ -42,7 +42,7 @@ export default function ProductListPage() {
       render: (row) => (
         <div className="flex items-center gap-3">
           <div className="w-10 h-12 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
-            <img src={row.variants[0]?.images[0]} alt={row.name} className="w-full h-full object-cover" />
+            <img src={row.variants[0]?.images[0]} alt={row.name} loading="lazy" onError={(e) => { e.target.src = '/images/products/fabrics-stack.png'; }} className="w-full h-full object-cover" />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-medium truncate max-w-[200px]">{row.name}</p>

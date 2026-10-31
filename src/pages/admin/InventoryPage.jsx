@@ -127,7 +127,7 @@ export default function InventoryPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-10 rounded bg-neutral-100 overflow-hidden shrink-0">
-                        <img src={v.image} alt="" className="w-full h-full object-cover" />
+                        <img src={v.image} alt="" loading="lazy" onError={(e) => { e.target.src = '/images/products/fabrics-stack.png'; }} className="w-full h-full object-cover" />
                       </div>
                       <span className="truncate max-w-[180px]">{v.productName}</span>
                     </div>

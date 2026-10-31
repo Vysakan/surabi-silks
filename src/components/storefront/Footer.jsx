@@ -7,9 +7,9 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <h3 className="text-white text-lg font-semibold mb-3">
-              Surabi <span className="text-primary-400">Silks</span>
-            </h3>
+            <Link to="/" className="inline-block mb-3">
+              <img src="/logo.jpg" alt="Surabi Silks" className="h-10 w-auto brightness-200" />
+            </Link>
             <p className="text-sm leading-relaxed">
               Curating the finest handloom textiles from across India. Authentic silks, cottons, and fabrics delivered to your doorstep.
             </p>
@@ -27,15 +27,15 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Customer Service */}
+          {/* Account */}
           <div>
-            <h4 className="text-white text-sm font-semibold mb-3 uppercase tracking-wider">Help</h4>
+            <h4 className="text-white text-sm font-semibold mb-3 uppercase tracking-wider">Account</h4>
             <ul className="space-y-2 text-sm">
-              <li><span className="hover:text-white transition-colors cursor-pointer">Shipping & Delivery</span></li>
-              <li><span className="hover:text-white transition-colors cursor-pointer">Returns & Exchange</span></li>
-              <li><span className="hover:text-white transition-colors cursor-pointer">Size Guide</span></li>
-              <li><span className="hover:text-white transition-colors cursor-pointer">FAQ</span></li>
-              <li><span className="hover:text-white transition-colors cursor-pointer">Contact Us</span></li>
+              <li><Link to="/login" className="hover:text-white transition-colors">Sign In</Link></li>
+              <li><Link to="/register" className="hover:text-white transition-colors">Register</Link></li>
+              <li><Link to="/account/orders" className="hover:text-white transition-colors">Order History</Link></li>
+              <li><Link to="/wishlist" className="hover:text-white transition-colors">Wishlist</Link></li>
+              <li><Link to="/cart" className="hover:text-white transition-colors">Cart</Link></li>
             </ul>
           </div>
 
@@ -52,10 +52,6 @@ export default function Footer() {
 
         <div className="border-t border-neutral-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
           <p>&copy; {new Date().getFullYear()} Surabi Silks. All rights reserved.</p>
-          <div className="flex items-center gap-4">
-            <span className="cursor-pointer hover:text-white">Privacy Policy</span>
-            <span className="cursor-pointer hover:text-white">Terms of Service</span>
-          </div>
         </div>
       </div>
     </footer>

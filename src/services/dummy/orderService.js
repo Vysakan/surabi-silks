@@ -1,4 +1,5 @@
 import { orders as initialOrders } from '@/data/orders';
+import { isValidTransition } from '@/lib/constants';
 
 const delay = (ms = 300) => new Promise((r) => setTimeout(r, ms));
 let _orders = JSON.parse(JSON.stringify(initialOrders));
@@ -51,6 +52,9 @@ export async function updateStatus(id, status) {
   await delay();
   const order = _orders.find((o) => o.id === id);
   if (!order) return null;
+  if (!isValidTransition(order.status, status)) {
+    throw new Error(`Invalid transition from "${order.status}" to "${status}"`);
+  }
   const now = new Date().toISOString();
   order.status = status;
   order.updatedAt = now;

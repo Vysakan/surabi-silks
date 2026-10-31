@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Upload, X } from 'lucide-react';
 import { Link } from 'react-router';
 import * as productService from '@/services/productService';
 import * as categoryService from '@/services/categoryService';
@@ -82,6 +82,30 @@ export default function ProductFormPage() {
   const removeVariant = (index) => {
     if (form.variants.length <= 1) return;
     setForm({ ...form, variants: form.variants.filter((_, i) => i !== index) });
+  };
+
+  const handleImageUpload = (variantIndex, files) => {
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const updated = [...form.variants];
+        updated[variantIndex] = {
+          ...updated[variantIndex],
+          images: [...updated[variantIndex].images.filter(Boolean), e.target.result],
+        };
+        setForm((prev) => ({ ...prev, variants: updated }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (variantIndex, imageIndex) => {
+    const variants = [...form.variants];
+    variants[variantIndex] = {
+      ...variants[variantIndex],
+      images: variants[variantIndex].images.filter((_, i) => i !== imageIndex),
+    };
+    setForm({ ...form, variants });
   };
 
   const handleSubmit = async (e) => {
@@ -215,6 +239,35 @@ export default function ProductFormPage() {
                 <Input label="MRP (₹)" type="number" value={variant.mrp} onChange={(e) => updateVariant(i, 'mrp', e.target.value)} />
                 <Input label="Stock" type="number" value={variant.stock} onChange={(e) => updateVariant(i, 'stock', e.target.value)} />
                 <Input label="SKU" value={variant.sku} onChange={(e) => updateVariant(i, 'sku', e.target.value)} />
+              </div>
+              {/* Images */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Images</label>
+                <div className="flex flex-wrap gap-3">
+                  {variant.images.filter(Boolean).map((img, imgIdx) => (
+                    <div key={imgIdx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-neutral-200 group">
+                      <img src={img} alt="" loading="lazy" onError={(e) => { e.target.src = '/images/products/fabrics-stack.png'; }} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(i, imgIdx)}
+                        className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="w-20 h-20 rounded-lg border-2 border-dashed border-neutral-300 flex flex-col items-center justify-center cursor-pointer hover:border-primary-400 transition-colors">
+                    <Upload size={16} className="text-neutral-400" />
+                    <span className="text-xs text-neutral-400 mt-1">Add</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => handleImageUpload(i, e.target.files)}
+                    />
+                  </label>
+                </div>
               </div>
             </div>
           ))}

@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { categories } from '@/data/categories';
 import { cn } from '@/lib/cn';
-import Button from '@/components/ui/Button';
 
 const COLORS = [
   { name: 'Red', hex: '#CC0000' },

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
-import { Heart, ShoppingBag, Minus, Plus, Truck, RotateCcw, Shield } from 'lucide-react';
+import { Heart, ShoppingBag, Minus, Plus, Truck, RotateCcw, Shield, Star } from 'lucide-react';
 import * as productService from '@/services/productService';
 import * as reviewService from '@/services/reviewService';
 import { useCartStore } from '@/stores/useCartStore';
 import { useWishlistStore } from '@/stores/useWishlistStore';
 import { useUIStore } from '@/stores/useUIStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import Button from '@/components/ui/Button';
 import PriceDisplay from '@/components/ui/PriceDisplay';
@@ -62,7 +63,76 @@ function VariantSelector({ label, options, value, onChange, type = 'text' }) {
   );
 }
 
-function ProductTabs({ product, reviews }) {
+function ReviewForm({ productId, onSubmitted }) {
+  const { isAuthenticated, user } = useAuthStore();
+  const addToast = useUIStore((s) => s.addToast);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  if (!isAuthenticated) {
+    return (
+      <div className="bg-neutral-50 rounded-lg p-4 text-center">
+        <p className="text-sm text-neutral-500">
+          <Link to="/login" className="text-primary-600 font-medium hover:underline">Sign in</Link> to write a review.
+        </p>
+      </div>
+    );
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (rating === 0) { addToast({ type: 'error', message: 'Please select a rating' }); return; }
+    if (comment.trim().length < 5) { addToast({ type: 'error', message: 'Review must be at least 5 characters' }); return; }
+    setSubmitting(true);
+    const review = await reviewService.create({
+      productId,
+      customerId: user.id,
+      customerName: user.name,
+      rating,
+      comment: comment.trim(),
+    });
+    onSubmitted(review);
+    setRating(0);
+    setComment('');
+    addToast({ type: 'success', message: 'Review submitted!' });
+    setSubmitting(false);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="border border-neutral-100 rounded-xl p-5 space-y-4">
+      <h4 className="text-sm font-semibold text-neutral-800">Write a Review</h4>
+      <div>
+        <p className="text-sm text-neutral-600 mb-2">Rating</p>
+        <div className="flex gap-1">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              type="button"
+              onClick={() => setRating(star)}
+              className="text-neutral-300 hover:text-amber-400 transition-colors"
+            >
+              <Star size={24} fill={star <= rating ? 'currentColor' : 'none'} className={star <= rating ? 'text-amber-400' : ''} />
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm text-neutral-600 mb-1">Your Review</label>
+        <textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          rows={3}
+          className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400"
+          placeholder="Share your thoughts about this product..."
+        />
+      </div>
+      <Button type="submit" isLoading={submitting} size="sm">Submit Review</Button>
+    </form>
+  );
+}
+
+function ProductTabs({ product, reviews, onReviewSubmitted }) {
   const [tab, setTab] = useState('description');
   const tabs = [
     { id: 'description', label: 'Description' },
@@ -109,11 +179,12 @@ function ProductTabs({ product, reviews }) {
           </div>
         )}
         {tab === 'reviews' && (
-          reviews.length === 0 ? (
-            <p className="text-neutral-500">No reviews yet. Be the first to review this product!</p>
-          ) : (
-            <div className="space-y-6">
-              {reviews.map((r) => (
+          <div className="space-y-6">
+            <ReviewForm productId={product.id} onSubmitted={onReviewSubmitted} />
+            {reviews.length === 0 ? (
+              <p className="text-neutral-500">No reviews yet. Be the first to review this product!</p>
+            ) : (
+              reviews.map((r) => (
                 <div key={r.id} className="pb-5 border-b border-neutral-50 last:border-0">
                   <div className="flex items-center gap-3 mb-2">
                     <StarRating value={r.rating} size={14} />
@@ -122,9 +193,9 @@ function ProductTabs({ product, reviews }) {
                   </div>
                   <p className="text-sm text-neutral-600">{r.comment}</p>
                 </div>
-              ))}
-            </div>
-          )
+              ))
+            )}
+          </div>
         )}
         {tab === 'care' && (
           <p className="text-neutral-600">{product.careInstructions || 'Please follow the care label on the product.'}</p>
@@ -146,7 +217,7 @@ export default function ProductDetailPage() {
 
   const addToCart = useCartStore((s) => s.addItem);
   const toggleWishlist = useWishlistStore((s) => s.toggleItem);
-  const isInWishlist = useWishlistStore((s) => s.isInWishlist);
+  const wishlistItems = useWishlistStore((s) => s.items);
   const { addToast, openCartDrawer } = useUIStore();
 
   useEffect(() => {
@@ -186,7 +257,7 @@ export default function ProductDetailPage() {
     (v) => v.color.name === selectedColor && v.size === selectedSize
   ) || product.variants[0];
 
-  const wishlisted = isInWishlist(activeVariant.id);
+  const wishlisted = wishlistItems.some((i) => i.variantId === activeVariant.id);
 
   const handleAddToCart = () => {
     if (activeVariant.stock === 0) return;
@@ -348,7 +419,7 @@ export default function ProductDetailPage() {
       </div>
 
       {/* Tabs */}
-      <ProductTabs product={product} reviews={reviews} />
+      <ProductTabs product={product} reviews={reviews} onReviewSubmitted={(review) => setReviews((prev) => [review, ...prev])} />
 
       {/* Related Products */}
       {related.length > 0 && (

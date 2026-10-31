@@ -7,6 +7,7 @@ import { banners } from '@/data/banners';
 import ProductCard from '@/components/storefront/ProductCard';
 import Button from '@/components/ui/Button';
 import { SkeletonProductCard } from '@/components/ui/Skeleton';
+import { FALLBACK_IMAGE } from '@/lib/constants';
 
 function HeroSection() {
   const [current, setCurrent] = useState(0);
@@ -20,13 +21,13 @@ function HeroSection() {
   const slide = heroSlides[current];
 
   return (
-    <section className="relative overflow-hidden bg-neutral-900" style={{ backgroundColor: slide.bgColor }}>
-      <div className="max-w-7xl mx-auto px-4 py-16 md:py-24 flex flex-col md:flex-row items-center gap-8 md:gap-12">
+    <section className="relative overflow-hidden bg-neutral-900 h-[320px] md:h-[360px]" style={{ backgroundColor: slide.bgColor }}>
+      <div className="max-w-7xl mx-auto px-4 h-full flex flex-col md:flex-row items-center gap-6 md:gap-10">
         <div className="flex-1 text-center md:text-left z-10">
-          <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-4">
+          <h1 className="text-2xl md:text-4xl font-bold text-white leading-tight mb-3">
             {slide.title}
           </h1>
-          <p className="text-base md:text-lg text-white/70 mb-8 max-w-lg">
+          <p className="text-sm md:text-base text-white/70 mb-6 max-w-lg">
             {slide.subtitle}
           </p>
           <Link to={slide.link}>
@@ -36,7 +37,7 @@ function HeroSection() {
             </Button>
           </Link>
           {heroSlides.length > 1 && (
-            <div className="flex items-center gap-2 mt-8 justify-center md:justify-start">
+            <div className="flex items-center gap-2 mt-5 justify-center md:justify-start">
               {heroSlides.map((_, i) => (
                 <button
                   key={i}
@@ -47,11 +48,12 @@ function HeroSection() {
             </div>
           )}
         </div>
-        <div className="flex-1 max-w-md md:max-w-lg">
+        <div className="flex-1 flex items-center justify-center h-full py-6">
           <img
             src={slide.image}
             alt={slide.title}
-            className="w-full rounded-2xl shadow-2xl"
+            onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
+            className="max-w-xs md:max-w-sm w-full h-full rounded-2xl shadow-2xl object-cover"
           />
         </div>
       </div>
@@ -76,6 +78,8 @@ function CategoryGrid() {
             <img
               src={cat.image}
               alt={cat.name}
+              loading="lazy"
+              onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
@@ -134,7 +138,7 @@ function PromoBanner() {
             </span>
           </div>
           <div className="flex-1">
-            <img src={promo.image} alt={promo.title} className="w-full h-64 md:h-80 object-cover" />
+            <img src={promo.image} alt={promo.title} loading="lazy" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} className="w-full h-64 md:h-80 object-cover" />
           </div>
         </div>
       </Link>
@@ -164,32 +168,6 @@ function TrustSignals() {
             </div>
           ))}
         </div>
-      </div>
-    </section>
-  );
-}
-
-function Newsletter() {
-  const [email, setEmail] = useState('');
-
-  return (
-    <section className="bg-neutral-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 py-14 text-center">
-        <h2 className="text-2xl md:text-3xl font-semibold mb-2">Stay in the Loop</h2>
-        <p className="text-neutral-400 mb-6">Get notified about new collections, exclusive offers, and styling tips.</p>
-        <form
-          onSubmit={(e) => { e.preventDefault(); setEmail(''); }}
-          className="flex flex-col sm:flex-row items-center gap-3 max-w-md mx-auto"
-        >
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
-            className="flex-1 w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
-          />
-          <Button type="submit" className="w-full sm:w-auto whitespace-nowrap">Subscribe</Button>
-        </form>
       </div>
     </section>
   );
@@ -233,7 +211,6 @@ export default function HomePage() {
         viewAllLink="/shop?sort=rating"
       />
       <TrustSignals />
-      <Newsletter />
     </>
   );
 }

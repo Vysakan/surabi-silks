@@ -1,4 +1,61 @@
-const IMG = (name, n = 1) => `https://placehold.co/600x800/e5e5e5/525252?text=${encodeURIComponent(name)}+${n}`;
+const SAREE_IMGS = [
+  '/images/products/saree-green.png',
+  '/images/products/saree-handloom.jpg',
+  '/images/products/saree-collection.jpg',
+  '/images/products/saree-pink-draped.jpg',
+  '/images/products/saree-red-gold.jpg',
+  '/images/products/saree-peach-kanchi.jpg',
+];
+const FABRIC_IMGS = [
+  '/images/products/fabrics-stack.png',
+  '/images/products/fabric-silk-brocade.jpg',
+  '/images/products/fabric-velvet-drape.jpg',
+  '/images/products/fabric-linen-wheel.jpg',
+  '/images/products/fabric-printed-stack.jpg',
+  '/images/products/fabric-block-print.jpg',
+];
+const DRESS_IMGS = [
+  '/images/products/kurti-model.png',
+  '/images/products/kurta-green-elephant.jpg',
+  '/images/products/kurta-purple-brocade.jpg',
+  '/images/products/kurta-maroon-dupatta.jpg',
+  '/images/products/kurta-green-kalamkari.jpg',
+  '/images/products/kurta-teal-paithani.jpg',
+  '/images/products/kurta-magenta-plain.jpg',
+];
+
+const IMG = (name, n = 1) => {
+  if (/Silk\+Fabric|Raw\+Silk|Ikat|Khadi|Linen/i.test(name)) {
+    if (/Silk\+Fabric/i.test(name)) return FABRIC_IMGS[n === 1 ? 1 : n === 2 ? 2 : 0];
+    if (/Raw\+Silk/i.test(name)) return FABRIC_IMGS[n === 1 ? 2 : n === 2 ? 1 : 4];
+    if (/Ikat/i.test(name)) return FABRIC_IMGS[n === 1 ? 5 : n === 2 ? 4 : 0];
+    if (/Khadi/i.test(name)) return FABRIC_IMGS[n === 1 ? 4 : n === 2 ? 0 : 5];
+    if (/Linen/i.test(name)) return FABRIC_IMGS[n === 1 ? 3 : n === 2 ? 0 : 1];
+    return FABRIC_IMGS[(n - 1) % FABRIC_IMGS.length];
+  }
+  if (/Chanderi|Jaipuri|Brocade|Lawn/i.test(name)) {
+    if (/Chanderi/i.test(name)) return DRESS_IMGS[n === 1 ? 2 : n === 2 ? 5 : 1];
+    if (/Jaipuri/i.test(name)) return DRESS_IMGS[n === 1 ? 4 : n === 2 ? 1 : 3];
+    if (/Brocade/i.test(name)) return DRESS_IMGS[n === 1 ? 3 : n === 2 ? 6 : 2];
+    if (/Lawn/i.test(name)) return DRESS_IMGS[n === 1 ? 6 : n === 2 ? 4 : 0];
+    return DRESS_IMGS[(n - 1) % DRESS_IMGS.length];
+  }
+  if (/Kanchi|Banarasi|Organza|Mysore|Tussar|Cotton|Mangalagiri|Georgette|Paithani|Pochampally/i.test(name)) {
+    if (/Kanchi|Bridal/i.test(name)) return SAREE_IMGS[n === 1 ? 4 : n === 2 ? 5 : 0];
+    if (/Banarasi|Mughal|Butta/i.test(name)) return SAREE_IMGS[n === 1 ? 2 : n === 2 ? 3 : 4];
+    if (/Organza/i.test(name)) return SAREE_IMGS[n === 1 ? 3 : n === 2 ? 0 : 2];
+    if (/Mysore/i.test(name)) return SAREE_IMGS[n === 1 ? 5 : n === 2 ? 1 : 0];
+    if (/Tussar|Madhubani/i.test(name)) return SAREE_IMGS[n === 1 ? 1 : n === 2 ? 3 : 0];
+    if (/Cotton|Mangalagiri/i.test(name)) return SAREE_IMGS[n === 1 ? 0 : n === 2 ? 1 : 5];
+    if (/Georgette|Sequin/i.test(name)) return SAREE_IMGS[n === 1 ? 3 : n === 2 ? 4 : 2];
+    if (/Paithani/i.test(name)) return SAREE_IMGS[n === 1 ? 2 : n === 2 ? 0 : 4];
+    if (/Pochampally/i.test(name)) return SAREE_IMGS[n === 1 ? 1 : n === 2 ? 5 : 3];
+    return SAREE_IMGS[(n - 1) % SAREE_IMGS.length];
+  }
+  if (/Blouse|Pattu/i.test(name)) return DRESS_IMGS[n === 1 ? 1 : n === 2 ? 3 : 5];
+  if (/Dupatta|Phulkari|Chiffon|Pashmina/i.test(name)) return DRESS_IMGS[n === 1 ? 5 : n === 2 ? 0 : 4];
+  return FABRIC_IMGS[0];
+};
 
 export const products = [
   // ═══════════════════════════════════════════

@@ -1,28 +1,33 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
-import { ArrowLeft, MapPin, CreditCard, Clock } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock } from 'lucide-react';
 import * as orderService from '@/services/orderService';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { formatPrice, formatDateTime } from '@/lib/formatters';
-import { ORDER_STATUSES } from '@/lib/constants';
+import { getValidNextStatuses, FALLBACK_IMAGE } from '@/lib/constants';
 
 const STATUS_COLORS = {
   pending: 'warning',
   confirmed: 'info',
   processing: 'info',
   shipped: 'primary',
+  out_for_delivery: 'primary',
   delivered: 'success',
   cancelled: 'error',
-  returned: 'error',
 };
 
-const STATUS_OPTIONS = Object.values(ORDER_STATUSES).map((s) => ({
-  value: s,
-  label: s.charAt(0).toUpperCase() + s.slice(1),
-}));
+const STATUS_LABELS = {
+  pending: 'Pending',
+  confirmed: 'Confirmed',
+  processing: 'Processing',
+  shipped: 'Shipped',
+  out_for_delivery: 'Out for Delivery',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+};
 
 export default function OrderDetailPage() {
   const { id } = useParams();
@@ -42,10 +47,17 @@ export default function OrderDetailPage() {
   }, [id]);
 
   const handleStatusUpdate = async () => {
-    if (newStatus === order.status) return;
+    if (!newStatus || newStatus === order.status) return;
     setUpdating(true);
-    const updated = await orderService.updateStatus(id, newStatus);
-    if (updated) setOrder(updated);
+    try {
+      const updated = await orderService.updateStatus(id, newStatus);
+      if (updated) {
+        setOrder(updated);
+        setNewStatus('');
+      }
+    } catch {
+      // transition rejected by service
+    }
     setUpdating(false);
   };
 
@@ -65,7 +77,7 @@ export default function OrderDetailPage() {
           <h1 className="text-2xl font-semibold text-neutral-900">{order.id}</h1>
           <p className="text-sm text-neutral-500 mt-1">{formatDateTime(order.createdAt)}</p>
         </div>
-        <Badge color={STATUS_COLORS[order.status]} className="text-sm px-3 py-1">{order.status}</Badge>
+        <Badge color={STATUS_COLORS[order.status] || 'info'} className="text-sm px-3 py-1">{STATUS_LABELS[order.status] || order.status}</Badge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -76,7 +88,7 @@ export default function OrderDetailPage() {
             {order.items.map((item, i) => (
               <div key={i} className="flex gap-4">
                 <div className="w-16 h-20 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
-                  <img src={item.image} alt={item.productName} className="w-full h-full object-cover" />
+                  <img src={item.image} alt={item.productName} loading="lazy" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{item.productName}</p>
@@ -102,19 +114,29 @@ export default function OrderDetailPage() {
           {/* Update status */}
           <div className="bg-white border border-neutral-100 rounded-xl p-5">
             <h3 className="font-semibold mb-3">Update Status</h3>
-            <Select
-              options={STATUS_OPTIONS}
-              value={newStatus}
-              onChange={(e) => setNewStatus(e.target.value)}
-            />
-            <Button
-              onClick={handleStatusUpdate}
-              isLoading={updating}
-              disabled={newStatus === order.status}
-              className="w-full mt-3"
-            >
-              Update Status
-            </Button>
+            {(() => {
+              const validNext = getValidNextStatuses(order.status);
+              if (validNext.length === 0) {
+                return <p className="text-sm text-neutral-500">No further transitions available.</p>;
+              }
+              const options = [
+                { value: '', label: 'Select next status' },
+                ...validNext.map((s) => ({ value: s, label: STATUS_LABELS[s] || s })),
+              ];
+              return (
+                <>
+                  <Select options={options} value={newStatus} onChange={(e) => setNewStatus(e.target.value)} />
+                  <Button
+                    onClick={handleStatusUpdate}
+                    isLoading={updating}
+                    disabled={!newStatus}
+                    className="w-full mt-3"
+                  >
+                    Update Status
+                  </Button>
+                </>
+              );
+            })()}
           </div>
 
           {/* Shipping address */}
@@ -143,7 +165,7 @@ export default function OrderDetailPage() {
                       {i < order.statusHistory.length - 1 && <div className="w-px flex-1 bg-neutral-200 mt-1" />}
                     </div>
                     <div className="pb-3">
-                      <p className="text-sm font-medium capitalize">{entry.status}</p>
+                      <p className="text-sm font-medium">{STATUS_LABELS[entry.status] || entry.status}</p>
                       <p className="text-xs text-neutral-400">{formatDateTime(entry.timestamp)}</p>
                     </div>
                   </div>

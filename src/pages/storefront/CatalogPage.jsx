@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router';
-import { SlidersHorizontal, X, LayoutGrid, List } from 'lucide-react';
+import { SlidersHorizontal, X } from 'lucide-react';
 import * as productService from '@/services/productService';
 import * as categoryService from '@/services/categoryService';
 import ProductCard from '@/components/storefront/ProductCard';
@@ -11,8 +11,6 @@ import Select from '@/components/ui/Select';
 import { SkeletonProductCard } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
 import { ITEMS_PER_PAGE } from '@/lib/constants';
-import { cn } from '@/lib/cn';
-
 const SORT_OPTIONS = [
   { value: '', label: 'Relevance' },
   { value: 'newest', label: 'Newest First' },
@@ -36,14 +34,13 @@ export default function CatalogPage() {
 
   const page = Number(searchParams.get('page')) || 1;
   const sort = searchParams.get('sort') || '';
-  const filters = {
-    categoryId: searchParams.get('categoryId') || undefined,
-    priceMin: searchParams.get('priceMin') ? Number(searchParams.get('priceMin')) : undefined,
-    priceMax: searchParams.get('priceMax') ? Number(searchParams.get('priceMax')) : undefined,
-    colors: searchParams.get('colors') ? searchParams.get('colors').split(',') : undefined,
-    fabrics: searchParams.get('fabrics') ? searchParams.get('fabrics').split(',') : undefined,
-    occasions: searchParams.get('occasions') ? searchParams.get('occasions').split(',') : undefined,
-  };
+  const filters = {};
+  if (searchParams.get('categoryId')) filters.categoryId = searchParams.get('categoryId');
+  if (searchParams.get('priceMin')) filters.priceMin = Number(searchParams.get('priceMin'));
+  if (searchParams.get('priceMax')) filters.priceMax = Number(searchParams.get('priceMax'));
+  if (searchParams.get('colors')) filters.colors = searchParams.get('colors').split(',');
+  if (searchParams.get('fabrics')) filters.fabrics = searchParams.get('fabrics').split(',');
+  if (searchParams.get('occasions')) filters.occasions = searchParams.get('occasions').split(',');
 
   useEffect(() => {
     async function resolveCategory() {
@@ -92,7 +89,16 @@ export default function CatalogPage() {
   };
 
   const handleFilterChange = (newFilters) => {
-    Object.entries(newFilters).forEach(([k, v]) => updateParam(k, v));
+    const next = new URLSearchParams(searchParams);
+    next.delete('page');
+    Object.entries(newFilters).forEach(([k, v]) => {
+      if (v == null || v === '' || (Array.isArray(v) && v.length === 0)) {
+        next.delete(k);
+      } else {
+        next.set(k, Array.isArray(v) ? v.join(',') : v);
+      }
+    });
+    setSearchParams(next, { replace: true });
   };
 
   const handleClearFilters = () => {

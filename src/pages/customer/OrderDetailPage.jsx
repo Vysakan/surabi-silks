@@ -8,7 +8,12 @@ import { formatPrice, formatDate, formatDateTime } from '@/lib/formatters';
 
 const STATUS_COLORS = {
   pending: 'warning', confirmed: 'info', processing: 'info',
-  shipped: 'primary', delivered: 'success', cancelled: 'error', returned: 'error',
+  shipped: 'primary', out_for_delivery: 'primary', delivered: 'success', cancelled: 'error',
+};
+
+const STATUS_LABELS = {
+  pending: 'Pending', confirmed: 'Confirmed', processing: 'Processing',
+  shipped: 'Shipped', out_for_delivery: 'Out for Delivery', delivered: 'Delivered', cancelled: 'Cancelled',
 };
 
 export default function OrderDetailPage() {
@@ -39,7 +44,7 @@ export default function OrderDetailPage() {
           <h1 className="text-2xl font-semibold text-neutral-900">{order.id}</h1>
           <p className="text-sm text-neutral-500 mt-1">Placed on {formatDate(order.createdAt)}</p>
         </div>
-        <Badge color={STATUS_COLORS[order.status]}>{order.status}</Badge>
+        <Badge color={STATUS_COLORS[order.status] || 'info'}>{STATUS_LABELS[order.status] || order.status}</Badge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -47,7 +52,7 @@ export default function OrderDetailPage() {
           {order.items.map((item, i) => (
             <div key={i} className="flex gap-4 border border-neutral-100 rounded-xl p-4">
               <div className="w-16 h-20 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
-                <img src={item.image} alt={item.productName} className="w-full h-full object-cover" />
+                <img src={item.image} alt={item.productName} loading="lazy" onError={(e) => { e.target.src = '/images/products/fabrics-stack.png'; }} className="w-full h-full object-cover" />
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium">{item.productName}</p>
@@ -92,7 +97,7 @@ export default function OrderDetailPage() {
                       {i < order.statusHistory.length - 1 && <div className="w-px flex-1 bg-neutral-200 mt-1" />}
                     </div>
                     <div className="pb-3">
-                      <p className="text-sm font-medium capitalize">{entry.status}</p>
+                      <p className="text-sm font-medium">{STATUS_LABELS[entry.status] || entry.status}</p>
                       <p className="text-xs text-neutral-400">{formatDateTime(entry.timestamp)}</p>
                     </div>
                   </div>

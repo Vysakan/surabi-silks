@@ -12,6 +12,15 @@ import Input from '@/components/ui/Input';
 import EmptyState from '@/components/ui/EmptyState';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import { cn } from '@/lib/cn';
+import { products } from '@/data/products';
+import { FALLBACK_IMAGE } from '@/lib/constants';
+
+function resolveImage(item) {
+  const product = products.find((p) => p.id === item.productId);
+  if (!product) return item.image || FALLBACK_IMAGE;
+  const variant = product.variants.find((v) => v.id === item.variantId);
+  return variant?.images?.[0] || product.variants[0]?.images?.[0] || item.image || FALLBACK_IMAGE;
+}
 
 const PAYMENT_METHODS = [
   { id: 'upi', label: 'UPI', icon: Smartphone, desc: 'Pay using UPI apps' },
@@ -179,7 +188,7 @@ export default function CheckoutPage() {
               {items.map((item) => (
                 <div key={item.variantId} className="flex gap-3">
                   <div className="w-14 h-16 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
-                    <img src={item.image} alt={item.productName} className="w-full h-full object-cover" />
+                    <img src={resolveImage(item)} alt={item.productName} loading="lazy" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{item.productName}</p>

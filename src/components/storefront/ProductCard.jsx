@@ -7,11 +7,11 @@ import { useUIStore } from '@/stores/useUIStore';
 import PriceDisplay from '@/components/ui/PriceDisplay';
 import Badge from '@/components/ui/Badge';
 import { cn } from '@/lib/cn';
+import { FALLBACK_IMAGE } from '@/lib/constants';
 
 export default function ProductCard({ product }) {
   const [hoveredColor, setHoveredColor] = useState(null);
   const toggleWishlist = useWishlistStore((s) => s.toggleItem);
-  const isInWishlist = useWishlistStore((s) => s.isInWishlist);
   const addToCart = useCartStore((s) => s.addItem);
   const addToast = useUIStore((s) => s.addToast);
   const openCartDrawer = useUIStore((s) => s.openCartDrawer);
@@ -23,7 +23,7 @@ export default function ProductCard({ product }) {
 
   const mainImage = activeVariant.images[0];
   const hoverImage = activeVariant.images[1] || mainImage;
-  const wishlisted = isInWishlist(defaultVariant.id);
+  const wishlisted = useWishlistStore((s) => s.items.some((i) => i.variantId === defaultVariant.id));
 
   const handleWishlist = (e) => {
     e.preventDefault();
@@ -65,11 +65,15 @@ export default function ProductCard({ product }) {
         <img
           src={mainImage}
           alt={product.name}
+          loading="lazy"
+          onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
           className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
         />
         <img
           src={hoverImage}
           alt={`${product.name} alternate`}
+          loading="lazy"
+          onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
           className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
         />
 
@@ -89,7 +93,7 @@ export default function ProductCard({ product }) {
         <button
           onClick={handleWishlist}
           className={cn(
-            'absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200',
+            'absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer',
             wishlisted
               ? 'bg-red-50 text-red-500'
               : 'bg-white/80 text-neutral-500 opacity-0 group-hover:opacity-100 hover:bg-white hover:text-red-500'

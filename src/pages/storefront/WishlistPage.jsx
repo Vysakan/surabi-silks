@@ -10,6 +10,7 @@ import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Link } from 'react-router';
+import { FALLBACK_IMAGE } from '@/lib/constants';
 
 export default function WishlistPage() {
   const { items: wishlistItems, removeItem, clearAll } = useWishlistStore();
@@ -80,7 +81,7 @@ export default function WishlistPage() {
           {products.map(({ product, variant }) => (
             <div key={variant.id} className="border border-neutral-100 rounded-xl overflow-hidden group">
               <Link to={`/product/${product.slug}`} className="block aspect-[3/4] relative overflow-hidden bg-neutral-100">
-                <img src={variant.images[0]} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img src={variant.images[0]} alt={product.name} loading="lazy" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
               </Link>
               <div className="p-4">
                 <p className="text-xs text-neutral-400 uppercase tracking-wider">{product.fabric}</p>

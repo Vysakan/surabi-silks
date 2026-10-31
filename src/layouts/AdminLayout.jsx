@@ -1,5 +1,6 @@
-import { Outlet, Link, useLocation } from 'react-router';
-import { LayoutDashboard, Package, FolderTree, ShoppingCart, Warehouse, Store } from 'lucide-react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router';
+import { LayoutDashboard, Package, FolderTree, ShoppingCart, Warehouse, Store, LogOut } from 'lucide-react';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { cn } from '@/lib/cn';
 
 const navItems = [
@@ -12,6 +13,13 @@ const navItems = [
 
 export default function AdminLayout() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const logout = useAuthStore((s) => s.logout);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <div className="min-h-screen flex bg-neutral-50">
@@ -37,7 +45,7 @@ export default function AdminLayout() {
             );
           })}
         </nav>
-        <div className="mt-auto pt-8">
+        <div className="mt-auto pt-8 space-y-1">
           <Link
             to="/"
             target="_blank"
@@ -46,12 +54,26 @@ export default function AdminLayout() {
             <Store size={16} />
             View Store
           </Link>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-500 hover:text-red-400 transition-colors w-full"
+          >
+            <LogOut size={16} />
+            Logout
+          </button>
         </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-white border-b border-neutral-200 flex items-center justify-between px-6 shrink-0">
           <h1 className="text-lg font-medium text-neutral-800">Admin Panel</h1>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-sm text-neutral-500 hover:text-red-500 transition-colors"
+          >
+            <LogOut size={16} />
+            <span className="hidden sm:inline">Logout</span>
+          </button>
         </header>
         <main className="flex-1 p-6 overflow-auto">
           <Outlet />

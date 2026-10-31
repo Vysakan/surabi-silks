@@ -1,3 +1,5 @@
+export const FALLBACK_IMAGE = '/images/products/fabrics-stack.png';
+
 export const CURRENCY = 'INR';
 export const CURRENCY_SYMBOL = '₹';
 export const LOCALE = 'en-IN';
@@ -9,10 +11,28 @@ export const ORDER_STATUSES = {
   CONFIRMED: 'confirmed',
   PROCESSING: 'processing',
   SHIPPED: 'shipped',
+  OUT_FOR_DELIVERY: 'out_for_delivery',
   DELIVERED: 'delivered',
   CANCELLED: 'cancelled',
-  RETURNED: 'returned',
 };
+
+export const VALID_TRANSITIONS = {
+  pending: ['confirmed', 'cancelled'],
+  confirmed: ['processing', 'cancelled'],
+  processing: ['shipped', 'cancelled'],
+  shipped: ['out_for_delivery'],
+  out_for_delivery: ['delivered'],
+  delivered: [],
+  cancelled: [],
+};
+
+export function getValidNextStatuses(currentStatus) {
+  return VALID_TRANSITIONS[currentStatus] || [];
+}
+
+export function isValidTransition(from, to) {
+  return getValidNextStatuses(from).includes(to);
+}
 
 export const SELLING_UNITS = {
   PIECE: 'piece',

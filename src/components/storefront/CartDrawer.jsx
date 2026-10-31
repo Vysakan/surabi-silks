@@ -4,6 +4,15 @@ import { useCartStore } from '@/stores/useCartStore';
 import { useUIStore } from '@/stores/useUIStore';
 import { formatPrice } from '@/lib/formatters';
 import Button from '@/components/ui/Button';
+import { FALLBACK_IMAGE } from '@/lib/constants';
+import { products } from '@/data/products';
+
+function resolveImage(item) {
+  const product = products.find((p) => p.id === item.productId);
+  if (!product) return item.image || FALLBACK_IMAGE;
+  const variant = product.variants.find((v) => v.id === item.variantId);
+  return variant?.images?.[0] || product.variants[0]?.images?.[0] || item.image || FALLBACK_IMAGE;
+}
 
 export default function CartDrawer() {
   const { items, removeItem, updateQuantity, getSubtotal } = useCartStore();
@@ -47,7 +56,7 @@ export default function CartDrawer() {
               {items.map((item) => (
                 <div key={item.variantId} className="flex gap-4">
                   <div className="w-20 h-24 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
-                    <img src={item.image} alt={item.productName} className="w-full h-full object-cover" />
+                    <img src={resolveImage(item)} alt={item.productName} loading="lazy" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-medium text-neutral-800 truncate">{item.productName}</h4>

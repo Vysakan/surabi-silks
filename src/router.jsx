@@ -22,8 +22,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, ...p(() => import('@/pages/storefront/HomePage')) },
       { path: 'shop', ...p(() => import('@/pages/storefront/CatalogPage')) },
-      { path: 'shop/:categorySlug', ...p(() => import('@/pages/storefront/CategoryPage')) },
-      { path: 'shop/:categorySlug/:subcategorySlug', ...p(() => import('@/pages/storefront/CategoryPage')) },
+      { path: 'shop/:categorySlug', ...p(() => import('@/pages/storefront/CatalogPage')) },
+      { path: 'shop/:categorySlug/:subcategorySlug', ...p(() => import('@/pages/storefront/CatalogPage')) },
       { path: 'product/:slug', ...p(() => import('@/pages/storefront/ProductDetailPage')) },
       { path: 'cart', ...p(() => import('@/pages/storefront/CartPage')) },
       { path: 'checkout', ...p(() => import('@/pages/storefront/CheckoutPage')) },

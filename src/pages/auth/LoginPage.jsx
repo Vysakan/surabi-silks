@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, Navigate } from 'react-router';
 import { LogIn } from 'lucide-react';
 import * as authService from '@/services/authService';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -9,12 +9,16 @@ import Input from '@/components/ui/Input';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const login = useAuthStore((s) => s.login);
+  const { isAuthenticated, user, login } = useAuthStore();
   const addToast = useUIStore((s) => s.addToast);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  if (isAuthenticated) {
+    return <Navigate to={user?.role === 'admin' ? '/admin' : '/account'} replace />;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

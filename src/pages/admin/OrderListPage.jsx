@@ -13,14 +13,24 @@ const STATUS_COLORS = {
   confirmed: 'info',
   processing: 'info',
   shipped: 'primary',
+  out_for_delivery: 'primary',
   delivered: 'success',
   cancelled: 'error',
-  returned: 'error',
+};
+
+const STATUS_LABELS = {
+  pending: 'Pending',
+  confirmed: 'Confirmed',
+  processing: 'Processing',
+  shipped: 'Shipped',
+  out_for_delivery: 'Out for Delivery',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
 };
 
 const TABS = [
   { value: '', label: 'All' },
-  ...Object.values(ORDER_STATUSES).map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) })),
+  ...Object.values(ORDER_STATUSES).map((s) => ({ value: s, label: STATUS_LABELS[s] || s })),
 ];
 
 export default function OrderListPage() {
@@ -65,7 +75,7 @@ export default function OrderListPage() {
     {
       header: 'Status',
       accessor: 'status',
-      render: (row) => <Badge color={STATUS_COLORS[row.status]}>{row.status}</Badge>,
+      render: (row) => <Badge color={STATUS_COLORS[row.status] || 'info'}>{STATUS_LABELS[row.status] || row.status}</Badge>,
     },
   ];
 
