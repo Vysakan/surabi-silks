@@ -39,13 +39,15 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Company */}
           <div>
-            <h4 className="text-white text-sm font-semibold mb-3 uppercase tracking-wider">Contact</h4>
+            <h4 className="text-white text-sm font-semibold mb-3 uppercase tracking-wider">Company</h4>
             <ul className="space-y-2 text-sm">
+              <li><Link to="/about-us" className="hover:text-white transition-colors">About Us</Link></li>
+              <li><Link to="/contact-us" className="hover:text-white transition-colors">Contact Us</Link></li>
+              <li><Link to="/blog" className="hover:text-white transition-colors">Blog</Link></li>
               <li>support@surabsilks.com</li>
               <li>+91 98765 43210</li>
-              <li>Mon - Sat, 10am - 7pm IST</li>
             </ul>
           </div>
         </div>

@@ -102,6 +102,15 @@ export default function Navbar() {
             <Link to="/shop" className="text-sm text-neutral-600 hover:text-neutral-900 py-5 transition-colors">
               Shop All
             </Link>
+            <Link to="/blog" className="text-sm text-neutral-600 hover:text-neutral-900 py-5 transition-colors">
+              Blog
+            </Link>
+            <Link to="/about-us" className="text-sm text-neutral-600 hover:text-neutral-900 py-5 transition-colors">
+              About
+            </Link>
+            <Link to="/contact-us" className="text-sm text-neutral-600 hover:text-neutral-900 py-5 transition-colors">
+              Contact
+            </Link>
           </nav>
 
           {/* Right actions */}
@@ -204,11 +213,42 @@ export default function Navbar() {
             >
               Shop All
             </Link>
+            <Link
+              to="/blog"
+              onClick={toggleMobileMenu}
+              className="block px-3 py-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 rounded-lg"
+            >
+              Blog
+            </Link>
+            <Link
+              to="/about-us"
+              onClick={toggleMobileMenu}
+              className="block px-3 py-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 rounded-lg"
+            >
+              About Us
+            </Link>
+            <Link
+              to="/contact-us"
+              onClick={toggleMobileMenu}
+              className="block px-3 py-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 rounded-lg"
+            >
+              Contact Us
+            </Link>
             <div className="border-t border-neutral-100 pt-2 mt-2">
               {isAuthenticated ? (
                 <>
                   <Link to="/account" onClick={toggleMobileMenu} className="block px-3 py-2.5 text-sm text-neutral-600 hover:bg-neutral-50 rounded-lg">My Account</Link>
                   <Link to="/account/orders" onClick={toggleMobileMenu} className="block px-3 py-2.5 text-sm text-neutral-600 hover:bg-neutral-50 rounded-lg">My Orders</Link>
+                  <button
+                    onClick={() => {
+                      useAuthStore.getState().logout();
+                      toggleMobileMenu();
+                      navigate('/');
+                    }}
+                    className="block w-full text-left px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+                  >
+                    Logout
+                  </button>
                 </>
               ) : (
                 <Link to="/login" onClick={toggleMobileMenu} className="block px-3 py-2.5 text-sm text-primary-600 font-medium hover:bg-primary-50 rounded-lg">Login / Register</Link>

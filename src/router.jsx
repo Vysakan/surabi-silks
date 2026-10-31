@@ -29,6 +29,10 @@ export const router = createBrowserRouter([
       { path: 'checkout', ...p(() => import('@/pages/storefront/CheckoutPage')) },
       { path: 'wishlist', ...p(() => import('@/pages/storefront/WishlistPage')) },
       { path: 'search', ...p(() => import('@/pages/storefront/SearchResultsPage')) },
+      { path: 'about-us', ...p(() => import('@/pages/storefront/AboutPage')) },
+      { path: 'contact-us', ...p(() => import('@/pages/storefront/ContactPage')) },
+      { path: 'blog', ...p(() => import('@/pages/storefront/BlogPage')) },
+      { path: 'blog/:slug', ...p(() => import('@/pages/storefront/BlogArticlePage')) },
       { path: 'login', ...p(() => import('@/pages/auth/LoginPage')) },
       { path: 'register', ...p(() => import('@/pages/auth/RegisterPage')) },
       {

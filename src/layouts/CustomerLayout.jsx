@@ -1,5 +1,6 @@
-import { Outlet, NavLink } from 'react-router';
-import { User, MapPin, Package, Settings } from 'lucide-react';
+import { Outlet, NavLink, useNavigate } from 'react-router';
+import { User, MapPin, Package, Settings, LogOut } from 'lucide-react';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { cn } from '@/lib/cn';
 
 const navItems = [
@@ -10,6 +11,14 @@ const navItems = [
 ];
 
 export default function CustomerLayout() {
+  const logout = useAuthStore((s) => s.logout);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
       <aside className="w-full md:w-56 shrink-0">
@@ -33,6 +42,15 @@ export default function CustomerLayout() {
               {label}
             </NavLink>
           ))}
+          <div className="border-t border-neutral-100 mt-3 pt-3">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
+          </div>
         </nav>
       </aside>
       <div className="flex-1 min-w-0">

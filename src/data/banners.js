@@ -41,7 +41,7 @@ export const banners = [
     subtitle: 'Luxury in every thread — premium dress materials for the festive season.',
     cta: 'Shop Dress Materials',
     link: '/shop/dress-materials',
-    image: '/images/banners/promo-festive.jpg',
+    image: '/images/banners/promo-duo-saree.jpg',
     bgColor: '#6b1525',
   },
 ];
