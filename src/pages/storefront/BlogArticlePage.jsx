@@ -79,7 +79,7 @@ export default function BlogArticlePage() {
   return (
     <div>
       {/* Hero image */}
-      <div className="relative h-64 md:h-96 bg-neutral-900 overflow-hidden">
+      <div className="relative h-48 sm:h-64 md:h-96 bg-neutral-900 overflow-hidden">
         <img
           src={post.image}
           alt={post.title}
@@ -89,14 +89,14 @@ export default function BlogArticlePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/80 to-transparent" />
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 -mt-20 relative z-10">
+      <div className="max-w-3xl mx-auto px-4 -mt-10 sm:-mt-16 md:-mt-20 relative z-10">
         <Breadcrumbs items={[
           { label: 'Home', href: '/' },
           { label: 'Blog', href: '/blog' },
           { label: post.title },
         ]} />
 
-        <article className="bg-white rounded-2xl shadow-sm border border-neutral-100 p-6 md:p-10 mt-4">
+        <article className="bg-white rounded-2xl shadow-sm border border-neutral-100 p-5 sm:p-6 md:p-10 mt-4">
           <span className="text-xs font-medium text-primary-600 uppercase tracking-wider">{post.category}</span>
           <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 mt-2 mb-4 leading-tight">{post.title}</h1>
 

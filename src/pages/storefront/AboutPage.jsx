@@ -153,7 +153,7 @@ export default function AboutPage() {
               Three principles that guide every decision we make.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6 md:gap-8">
             {values.map((v) => (
               <div key={v.title} className="bg-white rounded-2xl p-8 text-center shadow-sm">
                 <div className="w-14 h-14 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center mx-auto mb-5">

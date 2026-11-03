@@ -42,21 +42,21 @@ export default function Navbar() {
       )}
     >
       {/* Top announcement bar */}
-      <div className="bg-neutral-900 text-white text-xs text-center py-1.5 px-4">
+      <div className="bg-neutral-900 text-white text-[10px] sm:text-xs text-center py-1.5 px-4 truncate">
         Free shipping on orders above ₹2,000 | Authentic Handloom Collection
       </div>
 
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Mobile menu toggle */}
-          <button onClick={toggleMobileMenu} className="lg:hidden p-2 -ml-2 text-neutral-700">
-            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-
-          {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <img src="/logo.jpg" alt="Surabi Silks" className="h-10 w-auto" />
-          </Link>
+          {/* Left: hamburger + logo */}
+          <div className="flex items-center gap-1">
+            <button onClick={toggleMobileMenu} className="lg:hidden p-2 -ml-2 text-neutral-700">
+              {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+            <Link to="/" className="flex items-center">
+              <img src="/logo.jpg" alt="Surabi Silks" className="h-10 w-auto" />
+            </Link>
+          </div>
 
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-8 ml-12">

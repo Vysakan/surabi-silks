@@ -61,10 +61,19 @@ function HeroSection() {
 
   return (
     <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #1A1A1A 0%, #2a2018 50%, #1A1A1A 100%)' }}>
+      {/* Background image for mobile */}
+      <img
+        src={slide.image}
+        alt=""
+        onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
+        className={`absolute inset-0 w-full h-full object-cover opacity-30 md:hidden transition-opacity duration-700 ${animate ? 'opacity-30' : 'opacity-0'}`}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/50 md:hidden" />
+
       <div className="max-w-7xl mx-auto px-4 md:px-8">
-        <div className="flex flex-col md:flex-row items-center min-h-[420px] md:min-h-[520px]">
-          {/* Left — Content (55%) */}
-          <div className={`md:w-[55%] text-center md:text-left py-10 md:py-16 z-10 transition-all duration-700 ${animate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        <div className="flex flex-col md:flex-row items-center min-h-[380px] md:min-h-[520px]">
+          {/* Left — Content */}
+          <div className={`w-full md:w-[55%] text-center md:text-left py-12 md:py-16 z-10 transition-all duration-700 ${animate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
             <span className="inline-block text-[10px] md:text-xs font-medium tracking-[0.25em] text-[#FAF6F1]/50 uppercase mb-4 md:mb-5">
               {slide.label}
             </span>
@@ -77,15 +86,15 @@ function HeroSection() {
             <p className="text-sm md:text-base text-[#FAF6F1]/60 leading-relaxed mb-8 max-w-lg mx-auto md:mx-0">
               {slide.subtitle}
             </p>
-            <div className="flex flex-wrap items-center gap-4 justify-center md:justify-start">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 justify-center md:justify-start">
               <Link to={slide.ctaLink}>
-                <button className="px-7 py-3 bg-[#ED0103] text-white text-sm font-semibold rounded-lg hover:bg-[#d40102] active:bg-[#b80102] transition-all duration-200 shadow-lg shadow-red-900/20">
+                <button className="px-5 sm:px-7 py-2.5 sm:py-3 bg-[#ED0103] text-white text-sm font-semibold rounded-lg hover:bg-[#d40102] active:bg-[#b80102] transition-all duration-200 shadow-lg shadow-red-900/20">
                   {slide.cta}
                   <ArrowRight size={16} className="inline ml-2 -mt-0.5" />
                 </button>
               </Link>
               <Link to={slide.secondaryLink}>
-                <button className="px-7 py-3 text-sm font-semibold text-white/90 border border-white/25 rounded-lg hover:bg-white/10 hover:border-white/40 transition-all duration-200">
+                <button className="px-5 sm:px-7 py-2.5 sm:py-3 text-sm font-semibold text-white/90 border border-white/25 rounded-lg hover:bg-white/10 hover:border-white/40 transition-all duration-200">
                   {slide.secondaryCta}
                 </button>
               </Link>
@@ -104,14 +113,14 @@ function HeroSection() {
             </div>
           </div>
 
-          {/* Right — Image (45%) */}
-          <div className={`md:w-[45%] flex items-center justify-center md:justify-end py-6 md:py-8 transition-all duration-700 ${animate ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-            <div className="relative w-full max-w-sm md:max-w-md">
+          {/* Right — Image card (desktop only) */}
+          <div className={`hidden md:flex md:w-[45%] items-center justify-end py-8 transition-all duration-700 ${animate ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+            <div className="relative w-full max-w-md">
               <img
                 src={slide.image}
                 alt={slide.title}
                 onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
-                className="w-full h-[320px] md:h-[440px] object-cover rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
+                className="w-full h-[440px] object-cover rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
               />
               <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10" />
             </div>
@@ -158,13 +167,13 @@ function CategoryGrid() {
 function ProductSection({ title, subtitle, products, loading, viewAllLink }) {
   return (
     <section className="max-w-7xl mx-auto px-4 py-12">
-      <div className="flex items-end justify-between mb-8">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-semibold text-neutral-900">{title}</h2>
-          {subtitle && <p className="text-neutral-500 mt-1">{subtitle}</p>}
+      <div className="flex items-end justify-between gap-4 mb-8">
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-neutral-900">{title}</h2>
+          {subtitle && <p className="text-neutral-500 text-sm mt-1">{subtitle}</p>}
         </div>
         {viewAllLink && (
-          <Link to={viewAllLink} className="text-sm font-medium text-primary-600 hover:text-primary-700 flex items-center gap-1">
+          <Link to={viewAllLink} className="text-sm font-medium text-primary-600 hover:text-primary-700 flex items-center gap-1 shrink-0">
             View All <ArrowRight size={14} />
           </Link>
         )}

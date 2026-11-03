@@ -143,13 +143,13 @@ function ProductTabs({ product, reviews, onReviewSubmitted }) {
 
   return (
     <div className="mt-12 border-t border-neutral-100">
-      <div className="flex gap-6 border-b border-neutral-100">
+      <div className="flex gap-6 border-b border-neutral-100 overflow-x-auto scrollbar-hide">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              'py-4 text-sm font-medium border-b-2 transition-colors',
+              'py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap shrink-0',
               tab === t.id ? 'border-primary-500 text-primary-600' : 'border-transparent text-neutral-500 hover:text-neutral-700'
             )}
           >
@@ -359,7 +359,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Quantity + Add to Cart */}
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-6">
             <div className="flex items-center border border-neutral-200 rounded-lg">
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -376,20 +376,10 @@ export default function ProductDetailPage() {
               </button>
             </div>
 
-            <Button
-              onClick={handleAddToCart}
-              disabled={activeVariant.stock === 0}
-              className="flex-1"
-              size="lg"
-            >
-              <ShoppingBag size={18} className="mr-2" />
-              {activeVariant.stock === 0 ? 'Sold Out' : 'Add to Cart'}
-            </Button>
-
             <button
               onClick={handleWishlist}
               className={cn(
-                'w-12 h-12 rounded-lg border flex items-center justify-center transition-colors',
+                'w-10 h-10 sm:w-12 sm:h-12 rounded-lg border flex items-center justify-center transition-colors shrink-0',
                 wishlisted
                   ? 'border-red-200 bg-red-50 text-red-500'
                   : 'border-neutral-200 text-neutral-400 hover:text-red-500 hover:border-red-200'
@@ -397,6 +387,16 @@ export default function ProductDetailPage() {
             >
               <Heart size={20} fill={wishlisted ? 'currentColor' : 'none'} />
             </button>
+
+            <Button
+              onClick={handleAddToCart}
+              disabled={activeVariant.stock === 0}
+              className="w-full sm:flex-1 sm:w-auto"
+              size="lg"
+            >
+              <ShoppingBag size={18} className="mr-2" />
+              {activeVariant.stock === 0 ? 'Sold Out' : 'Add to Cart'}
+            </Button>
           </div>
 
           {/* Trust signals */}

@@ -116,19 +116,19 @@ export default function CatalogPage() {
     <div className="max-w-7xl mx-auto px-4 py-6">
       <Breadcrumbs items={breadcrumbs} />
 
-      <div className="flex items-center justify-between mt-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4 mb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-semibold text-neutral-900">{pageTitle}</h1>
           {!loading && <p className="text-sm text-neutral-500 mt-1">{total} products</p>}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => setMobileFiltersOpen(true)}
             className="lg:hidden flex items-center gap-2 px-3 py-2 border border-neutral-200 rounded-lg text-sm"
           >
             <SlidersHorizontal size={16} /> Filters
           </button>
-          <div className="hidden sm:block w-44">
+          <div className="w-36 sm:w-44">
             <Select
               options={SORT_OPTIONS}
               value={sort}

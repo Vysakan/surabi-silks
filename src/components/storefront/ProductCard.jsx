@@ -96,14 +96,14 @@ export default function ProductCard({ product }) {
             'absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer',
             wishlisted
               ? 'bg-red-50 text-red-500'
-              : 'bg-white/80 text-neutral-500 opacity-0 group-hover:opacity-100 hover:bg-white hover:text-red-500'
+              : 'bg-white/80 text-neutral-500 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 hover:bg-white hover:text-red-500'
           )}
         >
           <Heart size={18} fill={wishlisted ? 'currentColor' : 'none'} />
         </button>
 
         {/* Quick action */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200">
+        <div className="absolute bottom-0 left-0 right-0 p-3 opacity-100 translate-y-0 lg:opacity-0 lg:translate-y-2 lg:group-hover:opacity-100 lg:group-hover:translate-y-0 transition-all duration-200">
           {product.variants.length === 1 && activeVariant.stock > 0 ? (
             <button
               onClick={handleQuickAdd}

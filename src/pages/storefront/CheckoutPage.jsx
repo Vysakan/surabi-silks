@@ -156,22 +156,22 @@ export default function CheckoutPage() {
           {/* Payment */}
           <section>
             <h2 className="text-lg font-semibold mb-4">Payment Method</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {PAYMENT_METHODS.map((m) => (
                 <button
                   key={m.id}
                   onClick={() => setPaymentMethod(m.id)}
                   className={cn(
-                    'flex items-center gap-3 p-4 border rounded-xl transition-all text-left',
+                    'flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-3 p-3 sm:p-4 border rounded-xl transition-all text-center sm:text-left',
                     paymentMethod === m.id
                       ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-200'
                       : 'border-neutral-200 hover:border-neutral-300'
                   )}
                 >
-                  <m.icon size={20} className={paymentMethod === m.id ? 'text-primary-600' : 'text-neutral-400'} />
+                  <m.icon size={20} className={cn('shrink-0', paymentMethod === m.id ? 'text-primary-600' : 'text-neutral-400')} />
                   <div>
-                    <p className="text-sm font-medium">{m.label}</p>
-                    <p className="text-xs text-neutral-500">{m.desc}</p>
+                    <p className="text-xs sm:text-sm font-medium">{m.label}</p>
+                    <p className="text-[10px] sm:text-xs text-neutral-500 hidden sm:block">{m.desc}</p>
                   </div>
                 </button>
               ))}

@@ -46,13 +46,23 @@ export default function CartPage() {
         {/* Cart items */}
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
-            <div key={item.variantId} className="flex gap-4 p-4 border border-neutral-100 rounded-xl">
-              <Link to={`/product/${item.productId}`} className="w-24 h-28 md:w-28 md:h-32 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
+            <div key={item.variantId} className="flex gap-3 sm:gap-4 p-3 sm:p-4 border border-neutral-100 rounded-xl">
+              <Link to={`/product/${item.productId}`} className="w-20 h-24 sm:w-24 sm:h-28 md:w-28 md:h-32 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
                 <img src={resolveImage(item)} alt={item.productName} loading="lazy" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} className="w-full h-full object-cover" />
               </Link>
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm md:text-base font-medium text-neutral-800 truncate">{item.productName}</h3>
-                <p className="text-xs text-neutral-400 mt-0.5">{item.variantLabel}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h3 className="text-sm md:text-base font-medium text-neutral-800 truncate">{item.productName}</h3>
+                    <p className="text-xs text-neutral-400 mt-0.5">{item.variantLabel}</p>
+                  </div>
+                  <button
+                    onClick={() => removeItem(item.variantId)}
+                    className="text-neutral-400 hover:text-red-500 transition-colors shrink-0 p-1"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
                 <p className="text-sm font-semibold text-neutral-900 mt-2">{formatPrice(item.unitPrice)}</p>
                 {item.sellingUnit === 'metre' && (
                   <p className="text-xs text-neutral-500">per metre</p>
@@ -75,15 +85,7 @@ export default function CartPage() {
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-semibold">{formatPrice(item.unitPrice * item.quantity)}</span>
-                    <button
-                      onClick={() => removeItem(item.variantId)}
-                      className="text-neutral-400 hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                  <span className="text-sm font-semibold">{formatPrice(item.unitPrice * item.quantity)}</span>
                 </div>
               </div>
             </div>

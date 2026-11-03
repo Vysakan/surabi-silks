@@ -83,7 +83,7 @@ export default function ContactPage() {
 
       {/* Contact Cards */}
       <section className="max-w-7xl mx-auto px-4 -mt-1">
-        <div className="grid md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
           {contactCards.map((card) => (
             <div key={card.title} className="bg-white border border-neutral-100 rounded-2xl p-6 text-center shadow-sm">
               <div className="w-12 h-12 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center mx-auto mb-4">
