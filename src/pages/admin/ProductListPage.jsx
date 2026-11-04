@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { formatPrice } from '@/lib/formatters';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import SmartImage from '@/components/ui/SmartImage';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 export default function ProductListPage() {
@@ -42,7 +43,7 @@ export default function ProductListPage() {
       render: (row) => (
         <div className="flex items-center gap-3">
           <div className="w-10 h-12 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
-            <img src={row.variants[0]?.images[0]} alt={row.name} loading="lazy" onError={(e) => { e.target.src = '/images/products/fabrics-stack.png'; }} className="w-full h-full object-cover" />
+            <SmartImage src={row.variants[0]?.images[0]} alt={row.name} containerClassName="w-full h-full" className="w-full h-full" />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-medium truncate max-w-[200px]">{row.name}</p>

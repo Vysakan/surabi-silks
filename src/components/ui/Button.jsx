@@ -1,5 +1,5 @@
-import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { InlineSpinner } from '@/components/ui/LoadingSpinner';
 
 const variants = {
   primary: 'bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700',
@@ -35,7 +35,7 @@ export default function Button({
       disabled={disabled || isLoading}
       {...props}
     >
-      {isLoading && <Loader2 size={16} className="animate-spin" />}
+      {isLoading && <InlineSpinner />}
       {children}
     </button>
   );

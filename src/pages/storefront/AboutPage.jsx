@@ -2,7 +2,8 @@ import { Link } from 'react-router';
 import { ArrowRight, Gem, Heart, ShieldCheck } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
-import { FALLBACK_IMAGE } from '@/lib/constants';
+import SmartImage from '@/components/ui/SmartImage';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 
 const values = [
   {
@@ -28,28 +29,31 @@ export default function AboutPage() {
       {/* Hero */}
       <section className="relative bg-neutral-900 overflow-hidden">
         <div className="absolute inset-0">
-          <img
+          <SmartImage
             src="/images/products/saree-collection.jpg"
             alt="Textile heritage"
-            className="w-full h-full object-cover opacity-30"
-            onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
+            loading="eager"
+            containerClassName="w-full h-full"
+            className="w-full h-full opacity-30"
           />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 py-20 md:py-28 text-center">
           <div className="flex justify-center">
             <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'About Us' }]} />
           </div>
-          <h1 className="text-3xl md:text-5xl font-bold text-white mt-6 mb-4">Our Story</h1>
-          <p className="text-white/70 text-base md:text-lg max-w-2xl mx-auto">
-            Celebrating India's textile heritage — one thread at a time.
-          </p>
+          <ScrollReveal>
+            <h1 className="text-3xl md:text-5xl font-bold text-white mt-6 mb-4">Our Story</h1>
+            <p className="text-white/70 text-base md:text-lg max-w-2xl mx-auto">
+              Celebrating India's textile heritage — one thread at a time.
+            </p>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* Brand Story */}
       <section className="max-w-7xl mx-auto px-4 py-16 md:py-20">
         <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
-          <div>
+          <ScrollReveal>
             <h2 className="text-2xl md:text-3xl font-semibold text-neutral-900 mb-5">
               Born from a Love for Handloom
             </h2>
@@ -64,14 +68,13 @@ export default function AboutPage() {
                 We believe that every saree carries the soul of its maker. Our mission is to honour that legacy by connecting you directly with the artisans and traditions behind each creation.
               </p>
             </div>
-          </div>
+          </ScrollReveal>
           <div className="rounded-2xl overflow-hidden">
-            <img
+            <SmartImage
               src="/images/products/saree-red-gold.jpg"
               alt="Handloom weaving tradition"
-              loading="lazy"
-              onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
-              className="w-full h-80 md:h-[420px] object-cover"
+              containerClassName="w-full h-80 md:h-[420px]"
+              className="w-full h-full"
             />
           </div>
         </div>
@@ -82,15 +85,14 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 py-16 md:py-20">
           <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
             <div className="order-2 md:order-1 rounded-2xl overflow-hidden">
-              <img
+              <SmartImage
                 src="/images/products/saree-peach-kanchi.jpg"
                 alt="Fine silk textiles"
-                loading="lazy"
-                onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
-                className="w-full h-80 md:h-[420px] object-cover"
+                containerClassName="w-full h-80 md:h-[420px]"
+                className="w-full h-full"
               />
             </div>
-            <div className="order-1 md:order-2">
+            <ScrollReveal className="order-1 md:order-2">
               <h2 className="text-2xl md:text-3xl font-semibold text-neutral-900 mb-5">
                 Our Mission & Vision
               </h2>
@@ -108,7 +110,7 @@ export default function AboutPage() {
                   </p>
                 </div>
               </div>
-            </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
@@ -116,7 +118,7 @@ export default function AboutPage() {
       {/* Craftsmanship */}
       <section className="max-w-7xl mx-auto px-4 py-16 md:py-20">
         <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
-          <div>
+          <ScrollReveal>
             <h2 className="text-2xl md:text-3xl font-semibold text-neutral-900 mb-5">
               The Art of Indian Weaving
             </h2>
@@ -131,14 +133,13 @@ export default function AboutPage() {
                 Every Kanchipuram silk in our collection is woven with mulberry silk yarn and pure zari. Every Banarasi features hand-woven brocade patterns passed down through generations. Every cotton handloom is dyed with care and woven with intention.
               </p>
             </div>
-          </div>
+          </ScrollReveal>
           <div className="rounded-2xl overflow-hidden">
-            <img
+            <SmartImage
               src="/images/products/fabric-silk-brocade.jpg"
               alt="Silk weaving craftsmanship"
-              loading="lazy"
-              onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
-              className="w-full h-80 md:h-[420px] object-cover"
+              containerClassName="w-full h-80 md:h-[420px]"
+              className="w-full h-full"
             />
           </div>
         </div>
@@ -147,21 +148,21 @@ export default function AboutPage() {
       {/* Values */}
       <section className="bg-neutral-50">
         <div className="max-w-7xl mx-auto px-4 py-16 md:py-20">
-          <div className="text-center mb-12">
+          <ScrollReveal className="text-center mb-12">
             <h2 className="text-2xl md:text-3xl font-semibold text-neutral-900">What We Stand For</h2>
             <p className="text-neutral-500 mt-2 max-w-xl mx-auto">
               Three principles that guide every decision we make.
             </p>
-          </div>
+          </ScrollReveal>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6 md:gap-8">
-            {values.map((v) => (
-              <div key={v.title} className="bg-white rounded-2xl p-8 text-center shadow-sm">
+            {values.map((v, i) => (
+              <ScrollReveal key={v.title} delay={i * 120} className="bg-white rounded-2xl p-8 text-center shadow-sm">
                 <div className="w-14 h-14 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center mx-auto mb-5">
                   <v.icon size={26} />
                 </div>
                 <h3 className="text-lg font-semibold text-neutral-800 mb-3">{v.title}</h3>
                 <p className="text-neutral-500 text-sm leading-relaxed">{v.description}</p>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
@@ -169,12 +170,14 @@ export default function AboutPage() {
 
       {/* CTA */}
       <section className="max-w-7xl mx-auto px-4 py-16 md:py-20 text-center">
-        <h2 className="text-2xl md:text-3xl font-semibold text-neutral-900 mb-4">
-          Explore Our Collection
-        </h2>
-        <p className="text-neutral-500 max-w-xl mx-auto mb-8">
-          Discover handcrafted sarees, premium fabrics, and dress materials — each piece with a story worth wearing.
-        </p>
+        <ScrollReveal>
+          <h2 className="text-2xl md:text-3xl font-semibold text-neutral-900 mb-4">
+            Explore Our Collection
+          </h2>
+          <p className="text-neutral-500 max-w-xl mx-auto mb-8">
+            Discover handcrafted sarees, premium fabrics, and dress materials — each piece with a story worth wearing.
+          </p>
+        </ScrollReveal>
         <Link to="/shop">
           <Button size="lg">
             Shop Our Collection <ArrowRight size={18} className="ml-2" />

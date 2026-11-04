@@ -4,6 +4,8 @@ import { ArrowLeft, Clock } from 'lucide-react';
 import * as orderService from '@/services/orderService';
 import Badge from '@/components/ui/Badge';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import SmartImage from '@/components/ui/SmartImage';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 import { formatPrice, formatDate, formatDateTime } from '@/lib/formatters';
 
 const STATUS_COLORS = {
@@ -41,7 +43,7 @@ export default function OrderDetailPage() {
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-neutral-900">{order.id}</h1>
+          <ScrollReveal as="h1" className="text-2xl font-semibold text-neutral-900">{order.id}</ScrollReveal>
           <p className="text-sm text-neutral-500 mt-1">Placed on {formatDate(order.createdAt)}</p>
         </div>
         <Badge color={STATUS_COLORS[order.status] || 'info'}>{STATUS_LABELS[order.status] || order.status}</Badge>
@@ -52,7 +54,7 @@ export default function OrderDetailPage() {
           {order.items.map((item, i) => (
             <div key={i} className="flex gap-4 border border-neutral-100 rounded-xl p-4">
               <div className="w-16 h-20 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
-                <img src={item.image} alt={item.productName} loading="lazy" onError={(e) => { e.target.src = '/images/products/fabrics-stack.png'; }} className="w-full h-full object-cover" />
+                <SmartImage src={item.image} alt={item.productName} containerClassName="w-full h-full" className="w-full h-full" />
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium">{item.productName}</p>

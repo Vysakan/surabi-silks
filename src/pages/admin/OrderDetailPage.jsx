@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { formatPrice, formatDateTime } from '@/lib/formatters';
+import SmartImage from '@/components/ui/SmartImage';
 import { getValidNextStatuses, FALLBACK_IMAGE } from '@/lib/constants';
 
 const STATUS_COLORS = {
@@ -88,7 +89,7 @@ export default function OrderDetailPage() {
             {order.items.map((item, i) => (
               <div key={i} className="flex gap-4">
                 <div className="w-16 h-20 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
-                  <img src={item.image} alt={item.productName} loading="lazy" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} className="w-full h-full object-cover" />
+                  <SmartImage src={item.image} alt={item.productName} containerClassName="w-full h-full" className="w-full h-full" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{item.productName}</p>

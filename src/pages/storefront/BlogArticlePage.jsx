@@ -1,7 +1,8 @@
 import { useParams, Link } from 'react-router';
 import { ArrowLeft, Calendar, User, ArrowRight } from 'lucide-react';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
-import { FALLBACK_IMAGE } from '@/lib/constants';
+import SmartImage from '@/components/ui/SmartImage';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 import { blogPosts } from '@/data/blogPosts';
 
 function formatDate(dateStr) {
@@ -17,12 +18,11 @@ function RelatedCard({ post }) {
     <Link to={`/blog/${post.slug}`} className="group block">
       <div className="rounded-xl overflow-hidden border border-neutral-100 bg-white shadow-sm hover:shadow-md transition-shadow">
         <div className="aspect-[16/10] overflow-hidden">
-          <img
+          <SmartImage
             src={post.image}
             alt={post.title}
-            loading="lazy"
-            onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            containerClassName="w-full h-full"
+            className="w-full h-full transition-transform duration-500 group-hover:scale-105"
           />
         </div>
         <div className="p-4">
@@ -80,11 +80,12 @@ export default function BlogArticlePage() {
     <div>
       {/* Hero image */}
       <div className="relative h-48 sm:h-64 md:h-96 bg-neutral-900 overflow-hidden">
-        <img
+        <SmartImage
           src={post.image}
           alt={post.title}
-          className="w-full h-full object-cover opacity-60"
-          onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
+          loading="eager"
+          containerClassName="w-full h-full"
+          className="w-full h-full opacity-60"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/80 to-transparent" />
       </div>
@@ -122,7 +123,7 @@ export default function BlogArticlePage() {
       {/* Related Articles */}
       {relatedPosts.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 py-14 md:py-16">
-          <h2 className="text-xl md:text-2xl font-semibold text-neutral-900 mb-6">Related Articles</h2>
+          <ScrollReveal as="h2" className="text-xl md:text-2xl font-semibold text-neutral-900 mb-6">Related Articles</ScrollReveal>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {relatedPosts.map((p) => (
               <RelatedCard key={p.id} post={p} />

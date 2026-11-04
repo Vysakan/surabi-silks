@@ -3,6 +3,7 @@ import { MapPin, Phone, Mail, Clock, CheckCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input, { Textarea } from '@/components/ui/Input';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 import { isValidEmail, isValidPhone, isRequired } from '@/lib/validators';
 import * as contactService from '@/services/contactService';
 
@@ -74,26 +75,28 @@ export default function ContactPage() {
           <div className="flex justify-center">
             <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Contact Us' }]} />
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-white mt-6 mb-3">Get in Touch</h1>
-          <p className="text-white/70 max-w-xl mx-auto">
-            Have a question about our products, need styling advice, or want to place a bulk order? We'd love to hear from you.
-          </p>
+          <ScrollReveal>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mt-6 mb-3">Get in Touch</h1>
+            <p className="text-white/70 max-w-xl mx-auto">
+              Have a question about our products, need styling advice, or want to place a bulk order? We'd love to hear from you.
+            </p>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* Contact Cards */}
       <section className="max-w-7xl mx-auto px-4 -mt-1">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
-          {contactCards.map((card) => (
-            <div key={card.title} className="bg-white border border-neutral-100 rounded-2xl p-6 text-center shadow-sm">
+          {contactCards.map((card, i) => (
+            <ScrollReveal key={card.title} delay={i * 100} className="bg-white border border-neutral-100 rounded-2xl p-6 text-center shadow-sm">
               <div className="w-12 h-12 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center mx-auto mb-4">
                 <card.icon size={22} />
               </div>
               <h3 className="font-semibold text-neutral-800 mb-2">{card.title}</h3>
-              {card.lines.map((line, i) => (
-                <p key={i} className="text-sm text-neutral-500">{line}</p>
+              {card.lines.map((line, idx) => (
+                <p key={idx} className="text-sm text-neutral-500">{line}</p>
               ))}
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       </section>
@@ -103,10 +106,12 @@ export default function ContactPage() {
         <div className="grid lg:grid-cols-2 gap-10 md:gap-16">
           {/* Form */}
           <div>
-            <h2 className="text-2xl font-semibold text-neutral-900 mb-2">Send Us a Message</h2>
-            <p className="text-neutral-500 text-sm mb-8">
-              Fill in the form below and our team will respond within one business day.
-            </p>
+            <ScrollReveal>
+              <h2 className="text-2xl font-semibold text-neutral-900 mb-2">Send Us a Message</h2>
+              <p className="text-neutral-500 text-sm mb-8">
+                Fill in the form below and our team will respond within one business day.
+              </p>
+            </ScrollReveal>
 
             {status === 'success' ? (
               <div className="bg-green-50 border border-green-200 rounded-2xl p-8 text-center">

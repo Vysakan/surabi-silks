@@ -4,12 +4,14 @@ import StorefrontLayout from '@/layouts/StorefrontLayout';
 import AdminLayout from '@/layouts/AdminLayout';
 import CustomerLayout from '@/layouts/CustomerLayout';
 import ProtectedRoute from '@/components/ui/ProtectedRoute';
+import { PageLoader } from '@/components/ui/LoadingSpinner';
+import HomePage from '@/pages/storefront/HomePage';
 
 const p = (importFn) => {
   const Lazy = lazy(importFn);
   return {
     element: (
-      <Suspense fallback={<div className="p-8 text-neutral-400">Loading...</div>}>
+      <Suspense fallback={<PageLoader />}>
         <Lazy />
       </Suspense>
     ),
@@ -20,7 +22,7 @@ export const router = createBrowserRouter([
   {
     element: <StorefrontLayout />,
     children: [
-      { index: true, ...p(() => import('@/pages/storefront/HomePage')) },
+      { index: true, element: <HomePage /> },
       { path: 'shop', ...p(() => import('@/pages/storefront/CatalogPage')) },
       { path: 'shop/:categorySlug', ...p(() => import('@/pages/storefront/CatalogPage')) },
       { path: 'shop/:categorySlug/:subcategorySlug', ...p(() => import('@/pages/storefront/CatalogPage')) },

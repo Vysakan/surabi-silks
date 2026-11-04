@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { cn } from '@/lib/cn';
-import { FALLBACK_IMAGE } from '@/lib/constants';
+import SmartImage from '@/components/ui/SmartImage';
 
 export default function ImageGallery({ images = [], alt = '' }) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -25,18 +25,19 @@ export default function ImageGallery({ images = [], alt = '' }) {
               i === activeIndex ? 'border-primary-400' : 'border-transparent hover:border-neutral-300'
             )}
           >
-            <img src={img} alt={`${alt} ${i + 1}`} loading="lazy" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} className="w-full h-full object-cover" />
+            <SmartImage src={img} alt={`${alt} ${i + 1}`} containerClassName="w-full h-full" className="w-full h-full" />
           </button>
         ))}
       </div>
 
       <div className="flex-1 relative group">
         <div className="aspect-[3/4] rounded-[var(--radius-card)] overflow-hidden bg-neutral-100">
-          <img
+          <SmartImage
             src={images[activeIndex]}
             alt={alt}
-            onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="eager"
+            containerClassName="w-full h-full"
+            className="w-full h-full transition-transform duration-300 group-hover:scale-105"
           />
         </div>
       </div>

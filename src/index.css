@@ -57,3 +57,133 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* SmartImage — universal blur-to-sharp loading */
+@layer components {
+  .smart-image-wrap {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .smart-image-skeleton {
+    position: absolute;
+    inset: 0;
+    background: var(--color-neutral-100);
+    z-index: 1;
+  }
+
+  .smart-image-skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 100%
+    );
+    animation: smart-shimmer 1.6s ease-in-out infinite;
+  }
+
+  .smart-image-placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(14px);
+    transform: scale(1.05);
+  }
+
+  .smart-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    z-index: 2;
+    transition:
+      filter 500ms ease,
+      opacity 500ms ease,
+      transform 500ms ease;
+  }
+
+  .smart-image--loading {
+    filter: blur(14px);
+    opacity: 0;
+    transform: scale(1.03);
+  }
+
+  .smart-image--loaded {
+    filter: blur(0);
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .smart-image--error {
+    filter: blur(0);
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .smart-image {
+    transition: none;
+  }
+  .smart-image--loading {
+    filter: none;
+    transform: none;
+  }
+  .smart-image-skeleton::after {
+    animation: none;
+  }
+}
+
+@keyframes smart-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Branded spinner */
+@layer components {
+  .branded-spinner {
+    border-radius: 50%;
+    border-color: var(--color-neutral-200);
+    border-top-color: #ED0103;
+    animation: spinner-rotate 0.8s linear infinite;
+  }
+}
+
+@keyframes spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+
+/* Scroll reveal */
+@layer components {
+  .scroll-reveal {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(16px);
+    transition:
+      opacity 600ms ease-out,
+      filter 600ms ease-out,
+      transform 600ms ease-out;
+    will-change: opacity, filter, transform;
+  }
+
+  .scroll-reveal--visible {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    transition: none;
+  }
+  .branded-spinner {
+    animation-duration: 1.5s;
+  }
+}

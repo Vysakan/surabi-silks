@@ -6,6 +6,7 @@ import ProductCard from '@/components/storefront/ProductCard';
 import EmptyState from '@/components/ui/EmptyState';
 import { SkeletonProductCard } from '@/components/ui/Skeleton';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 
 export default function SearchResultsPage() {
   const [searchParams] = useSearchParams();
@@ -28,9 +29,9 @@ export default function SearchResultsPage() {
     <div className="max-w-7xl mx-auto px-4 py-6">
       <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: `Search: "${query}"` }]} />
 
-      <h1 className="text-2xl md:text-3xl font-semibold text-neutral-900 mt-4 mb-2">
+      <ScrollReveal as="h1" className="text-2xl md:text-3xl font-semibold text-neutral-900 mt-4 mb-2">
         Search Results
-      </h1>
+      </ScrollReveal>
       {!loading && (
         <p className="text-neutral-500 mb-8">
           {results.length} result{results.length !== 1 ? 's' : ''} for &ldquo;{query}&rdquo;

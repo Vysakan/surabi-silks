@@ -15,6 +15,7 @@ import Badge from '@/components/ui/Badge';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ProductCard from '@/components/storefront/ProductCard';
 import ImageGallery from '@/components/ui/ImageGallery';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 import { formatDate } from '@/lib/formatters';
 import { cn } from '@/lib/cn';
 
@@ -400,7 +401,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Trust signals */}
-          <div className="border-t border-neutral-100 pt-5 space-y-3">
+          <ScrollReveal className="border-t border-neutral-100 pt-5 space-y-3">
             {[
               { icon: Truck, text: 'Free shipping on orders above ₹2,000' },
               { icon: RotateCcw, text: '7-day easy returns' },
@@ -411,7 +412,7 @@ export default function ProductDetailPage() {
                 {s.text}
               </div>
             ))}
-          </div>
+          </ScrollReveal>
 
           {/* SKU */}
           <p className="text-xs text-neutral-400 mt-4">SKU: {activeVariant.sku}</p>
@@ -424,7 +425,7 @@ export default function ProductDetailPage() {
       {/* Related Products */}
       {related.length > 0 && (
         <section className="mt-16 mb-8">
-          <h2 className="text-2xl font-semibold text-neutral-900 mb-6">You May Also Like</h2>
+          <ScrollReveal as="h2" className="text-2xl font-semibold text-neutral-900 mb-6">You May Also Like</ScrollReveal>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {related.map((p) => (
               <ProductCard key={p.id} product={p} />

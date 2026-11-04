@@ -43,5 +43,6 @@ export const banners = [
     link: '/shop/dress-materials',
     image: '/images/banners/promo-duo-saree.jpg',
     bgColor: '#6b1525',
+    textTheme: 'dark',
   },
 ];

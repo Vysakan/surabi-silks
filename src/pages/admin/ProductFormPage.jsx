@@ -10,6 +10,7 @@ import Input from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import SmartImage from '@/components/ui/SmartImage';
 import { useUIStore } from '@/stores/useUIStore';
 
 const EMPTY_VARIANT = {
@@ -246,7 +247,7 @@ export default function ProductFormPage() {
                 <div className="flex flex-wrap gap-3">
                   {variant.images.filter(Boolean).map((img, imgIdx) => (
                     <div key={imgIdx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-neutral-200 group">
-                      <img src={img} alt="" loading="lazy" onError={(e) => { e.target.src = '/images/products/fabrics-stack.png'; }} className="w-full h-full object-cover" />
+                      <SmartImage src={img} alt="" containerClassName="w-full h-full" className="w-full h-full" />
                       <button
                         type="button"
                         onClick={() => removeImage(i, imgIdx)}

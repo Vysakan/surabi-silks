@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import { useUIStore } from '@/stores/useUIStore';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-neutral-900 mb-6">Account Settings</h1>
+      <ScrollReveal as="h1" className="text-2xl font-semibold text-neutral-900 mb-6">Account Settings</ScrollReveal>
 
       <div className="max-w-md space-y-8">
         {/* Change password */}

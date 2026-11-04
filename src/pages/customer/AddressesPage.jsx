@@ -9,6 +9,7 @@ import Modal from '@/components/ui/Modal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 
 const EMPTY_ADDRESS = { label: '', fullName: '', phone: '', line1: '', line2: '', city: '', state: '', pincode: '', isDefault: false };
 
@@ -59,7 +60,7 @@ export default function AddressesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-neutral-900">My Addresses</h1>
+        <ScrollReveal as="h1" className="text-2xl font-semibold text-neutral-900">My Addresses</ScrollReveal>
         <Button onClick={() => setEditing({ ...EMPTY_ADDRESS })}>
           <Plus size={16} className="mr-2" /> Add Address
         </Button>

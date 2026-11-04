@@ -10,6 +10,8 @@ import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Link } from 'react-router';
+import SmartImage from '@/components/ui/SmartImage';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 import { FALLBACK_IMAGE } from '@/lib/constants';
 
 export default function WishlistPage() {
@@ -58,9 +60,9 @@ export default function WishlistPage() {
       <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'Wishlist' }]} />
 
       <div className="flex items-center justify-between mt-4 mb-8">
-        <h1 className="text-2xl md:text-3xl font-semibold text-neutral-900">
+        <ScrollReveal as="h1" className="text-2xl md:text-3xl font-semibold text-neutral-900">
           Wishlist ({wishlistItems.length})
-        </h1>
+        </ScrollReveal>
         {wishlistItems.length > 0 && (
           <button onClick={clearAll} className="text-sm text-neutral-400 hover:text-red-500">
             Clear All
@@ -81,7 +83,7 @@ export default function WishlistPage() {
           {products.map(({ product, variant }) => (
             <div key={variant.id} className="border border-neutral-100 rounded-xl overflow-hidden group">
               <Link to={`/product/${product.slug}`} className="block aspect-[3/4] relative overflow-hidden bg-neutral-100">
-                <img src={variant.images[0]} alt={product.name} loading="lazy" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <SmartImage src={variant.images[0]} alt={product.name} containerClassName="w-full h-full" className="w-full h-full group-hover:scale-105 transition-transform duration-500" />
               </Link>
               <div className="p-4">
                 <p className="text-xs text-neutral-400 uppercase tracking-wider">{product.fabric}</p>

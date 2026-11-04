@@ -3,7 +3,8 @@ import { Link } from 'react-router';
 import { Search, ArrowRight, Calendar, User } from 'lucide-react';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import Pagination from '@/components/ui/Pagination';
-import { FALLBACK_IMAGE } from '@/lib/constants';
+import SmartImage from '@/components/ui/SmartImage';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 import { blogPosts, blogCategories } from '@/data/blogPosts';
 
 const POSTS_PER_PAGE = 4;
@@ -21,12 +22,11 @@ function BlogCard({ post }) {
     <Link to={`/blog/${post.slug}`} className="group block">
       <div className="rounded-2xl overflow-hidden border border-neutral-100 bg-white shadow-sm hover:shadow-md transition-shadow">
         <div className="aspect-[16/10] overflow-hidden">
-          <img
+          <SmartImage
             src={post.image}
             alt={post.title}
-            loading="lazy"
-            onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            containerClassName="w-full h-full"
+            className="w-full h-full transition-transform duration-500 group-hover:scale-105"
           />
         </div>
         <div className="p-5">
@@ -57,12 +57,11 @@ function FeaturedCard({ post }) {
     <Link to={`/blog/${post.slug}`} className="group block">
       <div className="grid md:grid-cols-2 gap-0 rounded-2xl overflow-hidden border border-neutral-100 bg-white shadow-sm hover:shadow-md transition-shadow">
         <div className="aspect-[16/10] md:aspect-auto overflow-hidden">
-          <img
+          <SmartImage
             src={post.image}
             alt={post.title}
-            loading="lazy"
-            onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            containerClassName="w-full h-full"
+            className="w-full h-full transition-transform duration-500 group-hover:scale-105"
           />
         </div>
         <div className="p-6 md:p-8 flex flex-col justify-center">
@@ -131,10 +130,12 @@ export default function BlogPage() {
           <div className="flex justify-center">
             <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Blog' }]} />
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-white mt-6 mb-3">The Surabi Journal</h1>
-          <p className="text-white/70 max-w-xl mx-auto">
-            Stories, styling guides, and textile wisdom from our world of handloom.
-          </p>
+          <ScrollReveal>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mt-6 mb-3">The Surabi Journal</h1>
+            <p className="text-white/70 max-w-xl mx-auto">
+              Stories, styling guides, and textile wisdom from our world of handloom.
+            </p>
+          </ScrollReveal>
         </div>
       </section>
 

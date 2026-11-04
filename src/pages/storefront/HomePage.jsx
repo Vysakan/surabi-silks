@@ -6,6 +6,8 @@ import { categories } from '@/data/categories';
 import { banners } from '@/data/banners';
 import ProductCard from '@/components/storefront/ProductCard';
 import Button from '@/components/ui/Button';
+import SmartImage from '@/components/ui/SmartImage';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 import { SkeletonProductCard } from '@/components/ui/Skeleton';
 import { FALLBACK_IMAGE } from '@/lib/constants';
 
@@ -62,11 +64,12 @@ function HeroSection() {
   return (
     <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #1A1A1A 0%, #2a2018 50%, #1A1A1A 100%)' }}>
       {/* Background image for mobile */}
-      <img
+      <SmartImage
         src={slide.image}
         alt=""
-        onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
-        className={`absolute inset-0 w-full h-full object-cover opacity-30 md:hidden transition-opacity duration-700 ${animate ? 'opacity-30' : 'opacity-0'}`}
+        loading="eager"
+        containerClassName={`absolute inset-0 md:hidden transition-opacity duration-700 ${animate ? 'opacity-30' : 'opacity-0'}`}
+        className="w-full h-full"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/50 md:hidden" />
 
@@ -116,11 +119,13 @@ function HeroSection() {
           {/* Right — Image card (desktop only) */}
           <div className={`hidden md:flex md:w-[45%] items-center justify-end py-8 transition-all duration-700 ${animate ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
             <div className="relative w-full max-w-md">
-              <img
+              <SmartImage
                 src={slide.image}
                 alt={slide.title}
-                onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
-                className="w-full h-[440px] object-cover rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
+                loading="eager"
+                fetchPriority="high"
+                containerClassName="w-full h-[440px] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
+                className="w-full h-full rounded-2xl"
               />
               <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10" />
             </div>
@@ -134,10 +139,10 @@ function HeroSection() {
 function CategoryGrid() {
   return (
     <section className="max-w-7xl mx-auto px-4 py-16">
-      <div className="text-center mb-10">
+      <ScrollReveal className="text-center mb-10">
         <h2 className="text-2xl md:text-3xl font-semibold text-neutral-900">Shop by Category</h2>
         <p className="text-neutral-500 mt-2">Explore our curated collections</p>
-      </div>
+      </ScrollReveal>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
         {categories.map((cat) => (
           <Link
@@ -145,12 +150,11 @@ function CategoryGrid() {
             to={`/shop/${cat.slug}`}
             className="group relative aspect-[4/3] rounded-xl overflow-hidden"
           >
-            <img
+            <SmartImage
               src={cat.image}
               alt={cat.name}
-              loading="lazy"
-              onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              containerClassName="absolute inset-0"
+              className="w-full h-full transition-transform duration-500 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -167,7 +171,7 @@ function CategoryGrid() {
 function ProductSection({ title, subtitle, products, loading, viewAllLink }) {
   return (
     <section className="max-w-7xl mx-auto px-4 py-12">
-      <div className="flex items-end justify-between gap-4 mb-8">
+      <ScrollReveal className="flex items-end justify-between gap-4 mb-8">
         <div className="min-w-0">
           <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-neutral-900">{title}</h2>
           {subtitle && <p className="text-neutral-500 text-sm mt-1">{subtitle}</p>}
@@ -177,7 +181,7 @@ function ProductSection({ title, subtitle, products, loading, viewAllLink }) {
             View All <ArrowRight size={14} />
           </Link>
         )}
-      </div>
+      </ScrollReveal>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => <SkeletonProductCard key={i} />)
@@ -192,27 +196,29 @@ function PromoBanner() {
   const promo = banners.find((b) => b.id === 'banner-promo');
   if (!promo) return null;
 
+  const dark = promo.textTheme === 'dark';
+
   return (
     <section className="max-w-7xl mx-auto px-4 py-8">
       <Link
         to={promo.link}
         className="group block relative rounded-2xl overflow-hidden h-64 md:h-80"
       >
-        <img
+        <SmartImage
           src={promo.image}
           alt={promo.title}
-          loading="lazy"
-          onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          containerClassName="absolute inset-0"
+          className="w-full h-full transition-transform duration-500 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
-        <div className="relative z-10 flex flex-col justify-center h-full p-8 md:p-12 max-w-lg">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">{promo.title}</h2>
-          <p className="text-white/80 mb-6">{promo.subtitle}</p>
-          <span className="inline-flex items-center gap-2 text-sm font-semibold text-white group-hover:gap-3 transition-all">
+        {!dark && <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />}
+        {dark && <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-white/30 to-transparent" />}
+        <ScrollReveal className="relative z-10 flex flex-col justify-center h-full p-8 md:p-12 max-w-lg">
+          <h2 className={`text-2xl md:text-3xl font-bold mb-3 ${dark ? 'text-[#1A1A1A]' : 'text-white'}`}>{promo.title}</h2>
+          <p className={`mb-6 ${dark ? 'text-[#555555]' : 'text-white/90'}`}>{promo.subtitle}</p>
+          <span className={`inline-flex items-center gap-2 text-sm font-semibold group-hover:gap-3 transition-all ${dark ? 'text-[#ED0103]' : 'text-white'}`}>
             {promo.cta} <ArrowRight size={16} />
           </span>
-        </div>
+        </ScrollReveal>
       </Link>
     </section>
   );
@@ -230,14 +236,14 @@ function TrustSignals() {
     <section className="border-y border-neutral-100 bg-neutral-50">
       <div className="max-w-7xl mx-auto px-4 py-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-          {signals.map((s) => (
-            <div key={s.title} className="flex flex-col items-center text-center">
+          {signals.map((s, i) => (
+            <ScrollReveal key={s.title} delay={i * 100} className="flex flex-col items-center text-center">
               <div className="w-12 h-12 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center mb-3">
                 <s.icon size={22} />
               </div>
               <h4 className="text-sm font-semibold text-neutral-800">{s.title}</h4>
               <p className="text-xs text-neutral-500 mt-0.5">{s.desc}</p>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       </div>

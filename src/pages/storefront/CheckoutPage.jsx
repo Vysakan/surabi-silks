@@ -11,6 +11,8 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import EmptyState from '@/components/ui/EmptyState';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
+import SmartImage from '@/components/ui/SmartImage';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 import { cn } from '@/lib/cn';
 import { products } from '@/data/products';
 import { FALLBACK_IMAGE } from '@/lib/constants';
@@ -127,7 +129,7 @@ export default function CheckoutPage() {
     <div className="max-w-7xl mx-auto px-4 py-6">
       <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'Cart', to: '/cart' }, { label: 'Checkout' }]} />
 
-      <h1 className="text-2xl md:text-3xl font-semibold text-neutral-900 mt-4 mb-8">Checkout</h1>
+      <ScrollReveal as="h1" className="text-2xl md:text-3xl font-semibold text-neutral-900 mt-4 mb-8">Checkout</ScrollReveal>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Form */}
@@ -188,7 +190,7 @@ export default function CheckoutPage() {
               {items.map((item) => (
                 <div key={item.variantId} className="flex gap-3">
                   <div className="w-14 h-16 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
-                    <img src={resolveImage(item)} alt={item.productName} loading="lazy" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} className="w-full h-full object-cover" />
+                    <SmartImage src={resolveImage(item)} alt={item.productName} containerClassName="w-full h-full" className="w-full h-full" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{item.productName}</p>

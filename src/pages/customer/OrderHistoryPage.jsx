@@ -6,6 +6,8 @@ import * as orderService from '@/services/orderService';
 import Badge from '@/components/ui/Badge';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
+import SmartImage from '@/components/ui/SmartImage';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 import { formatPrice, formatDate } from '@/lib/formatters';
 
 const STATUS_COLORS = {
@@ -48,7 +50,7 @@ export default function OrderHistoryPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-neutral-900 mb-6">Order History</h1>
+      <ScrollReveal as="h1" className="text-2xl font-semibold text-neutral-900 mb-6">Order History</ScrollReveal>
       <div className="space-y-4">
         {orders.map((order) => (
           <Link
@@ -70,7 +72,7 @@ export default function OrderHistoryPage() {
               <div className="flex -space-x-2">
                 {order.items.slice(0, 3).map((item, i) => (
                   <div key={i} className="w-10 h-12 rounded-lg overflow-hidden border-2 border-white bg-neutral-100">
-                    <img src={item.image} alt="" loading="lazy" onError={(e) => { e.target.src = '/images/products/fabrics-stack.png'; }} className="w-full h-full object-cover" />
+                    <SmartImage src={item.image} alt="" containerClassName="w-full h-full" className="w-full h-full" />
                   </div>
                 ))}
               </div>

@@ -6,6 +6,8 @@ import { FREE_SHIPPING_THRESHOLD, SHIPPING_COST } from '@/lib/constants';
 import Button from '@/components/ui/Button';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import EmptyState from '@/components/ui/EmptyState';
+import SmartImage from '@/components/ui/SmartImage';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 import { FALLBACK_IMAGE } from '@/lib/constants';
 import { products } from '@/data/products';
 
@@ -40,7 +42,7 @@ export default function CartPage() {
     <div className="max-w-7xl mx-auto px-4 py-6">
       <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'Cart' }]} />
 
-      <h1 className="text-2xl md:text-3xl font-semibold text-neutral-900 mt-4 mb-8">Shopping Cart</h1>
+      <ScrollReveal as="h1" className="text-2xl md:text-3xl font-semibold text-neutral-900 mt-4 mb-8">Shopping Cart</ScrollReveal>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cart items */}
@@ -48,7 +50,7 @@ export default function CartPage() {
           {items.map((item) => (
             <div key={item.variantId} className="flex gap-3 sm:gap-4 p-3 sm:p-4 border border-neutral-100 rounded-xl">
               <Link to={`/product/${item.productId}`} className="w-20 h-24 sm:w-24 sm:h-28 md:w-28 md:h-32 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
-                <img src={resolveImage(item)} alt={item.productName} loading="lazy" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} className="w-full h-full object-cover" />
+                <SmartImage src={resolveImage(item)} alt={item.productName} containerClassName="w-full h-full" className="w-full h-full" />
               </Link>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">

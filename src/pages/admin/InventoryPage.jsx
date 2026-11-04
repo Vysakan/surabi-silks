@@ -3,6 +3,7 @@ import * as productService from '@/services/productService';
 import Badge from '@/components/ui/Badge';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { formatPrice } from '@/lib/formatters';
+import SmartImage from '@/components/ui/SmartImage';
 import { cn } from '@/lib/cn';
 
 const FILTERS = [
@@ -127,7 +128,7 @@ export default function InventoryPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-10 rounded bg-neutral-100 overflow-hidden shrink-0">
-                        <img src={v.image} alt="" loading="lazy" onError={(e) => { e.target.src = '/images/products/fabrics-stack.png'; }} className="w-full h-full object-cover" />
+                        <SmartImage src={v.image} alt="" containerClassName="w-full h-full" className="w-full h-full" />
                       </div>
                       <span className="truncate max-w-[180px]">{v.productName}</span>
                     </div>

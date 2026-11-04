@@ -4,6 +4,7 @@ import { useCartStore } from '@/stores/useCartStore';
 import { useUIStore } from '@/stores/useUIStore';
 import { formatPrice } from '@/lib/formatters';
 import Button from '@/components/ui/Button';
+import SmartImage from '@/components/ui/SmartImage';
 import { FALLBACK_IMAGE } from '@/lib/constants';
 import { products } from '@/data/products';
 
@@ -56,7 +57,7 @@ export default function CartDrawer() {
               {items.map((item) => (
                 <div key={item.variantId} className="flex gap-4">
                   <div className="w-20 h-24 rounded-lg overflow-hidden bg-neutral-100 shrink-0">
-                    <img src={resolveImage(item)} alt={item.productName} loading="lazy" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} className="w-full h-full object-cover" />
+                    <SmartImage src={resolveImage(item)} alt={item.productName} containerClassName="w-full h-full" className="w-full h-full" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-medium text-neutral-800 truncate">{item.productName}</h4>

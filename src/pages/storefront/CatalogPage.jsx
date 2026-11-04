@@ -10,6 +10,7 @@ import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import Select from '@/components/ui/Select';
 import { SkeletonProductCard } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 import { ITEMS_PER_PAGE } from '@/lib/constants';
 const SORT_OPTIONS = [
   { value: '', label: 'Relevance' },
@@ -118,7 +119,7 @@ export default function CatalogPage() {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4 mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-semibold text-neutral-900">{pageTitle}</h1>
+          <ScrollReveal as="h1" className="text-2xl md:text-3xl font-semibold text-neutral-900">{pageTitle}</ScrollReveal>
           {!loading && <p className="text-sm text-neutral-500 mt-1">{total} products</p>}
         </div>
         <div className="flex items-center gap-2 sm:gap-3">

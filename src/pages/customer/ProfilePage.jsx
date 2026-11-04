@@ -4,6 +4,7 @@ import { useUIStore } from '@/stores/useUIStore';
 import * as customerService from '@/services/customerService';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
@@ -28,7 +29,7 @@ export default function ProfilePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-neutral-900 mb-6">My Profile</h1>
+      <ScrollReveal as="h1" className="text-2xl font-semibold text-neutral-900 mb-6">My Profile</ScrollReveal>
 
       <form onSubmit={handleSave} className="max-w-md space-y-4">
         <Input label="Full Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />

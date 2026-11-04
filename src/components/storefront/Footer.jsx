@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 
 export default function Footer() {
   return (
@@ -6,14 +7,14 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
-          <div>
+          <ScrollReveal>
             <Link to="/" className="inline-block mb-3">
               <img src="/logo.jpg" alt="Surabi Silks" className="h-10 w-auto brightness-200" />
             </Link>
             <p className="text-sm leading-relaxed">
               Curating the finest handloom textiles from across India. Authentic silks, cottons, and fabrics delivered to your doorstep.
             </p>
-          </div>
+          </ScrollReveal>
 
           {/* Shop */}
           <div>

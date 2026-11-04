@@ -6,8 +6,8 @@ import { useCartStore } from '@/stores/useCartStore';
 import { useUIStore } from '@/stores/useUIStore';
 import PriceDisplay from '@/components/ui/PriceDisplay';
 import Badge from '@/components/ui/Badge';
+import SmartImage from '@/components/ui/SmartImage';
 import { cn } from '@/lib/cn';
-import { FALLBACK_IMAGE } from '@/lib/constants';
 
 export default function ProductCard({ product }) {
   const [hoveredColor, setHoveredColor] = useState(null);
@@ -62,19 +62,17 @@ export default function ProductCard({ product }) {
       {/* Image container */}
       <div className="relative aspect-[3/4] rounded-[var(--radius-card)] overflow-hidden bg-neutral-100 mb-3">
         {/* Main image with hover swap */}
-        <img
+        <SmartImage
           src={mainImage}
           alt={product.name}
-          loading="lazy"
-          onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
+          containerClassName="absolute inset-0 transition-opacity duration-500 group-hover:opacity-0"
+          className="w-full h-full"
         />
-        <img
+        <SmartImage
           src={hoverImage}
           alt={`${product.name} alternate`}
-          loading="lazy"
-          onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
-          className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          containerClassName="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          className="w-full h-full"
         />
 
         {/* Badges */}
