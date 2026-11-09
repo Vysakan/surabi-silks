@@ -226,23 +226,23 @@ backend/
 
 ## Remaining Backend Phases
 
-### Phase 2 — Orders & Checkout
-- Order creation and management
-- Order status updates with history
-- Order listing (customer + admin)
-- Stock deduction on order confirmation
+### Orders & Checkout
+
+Orders are implemented. Run `npm run migrate` after updating to create the orders, order items, and status history tables. The API lists a customer's own orders (admins can list all), places orders using server-side variant prices and stock, and lets admins advance or cancel orders. Order placement and inventory deduction are transactional; cancelling restores stock.
 
 ### Phase 3 — Customer Management
 - Profile update
 - Address CRUD
-- Order history per customer
 - Admin customer listing
 
-### Phase 4 — Reviews & Ratings
-- Submit review (authenticated customers)
-- List reviews per product
-- Rating aggregation
-- Admin review moderation
+### Reviews & Ratings
+
+Public product review listing and authenticated review submission are implemented. Submitting a review updates the product's average rating and review count. Admin review moderation remains planned.
+
+| Method | Endpoint                   | Auth     | Description            |
+|--------|----------------------------|----------|------------------------|
+| GET    | `/products/:id/reviews`    | Public   | List product reviews   |
+| POST   | `/reviews`                 | Customer | Submit a product review|
 
 ### Phase 5 — Admin Dashboard
 - Sales analytics

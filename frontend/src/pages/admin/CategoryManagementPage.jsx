@@ -17,8 +17,8 @@ export default function CategoryManagementPage() {
 
   useEffect(() => {
     async function load() {
-      const data = await categoryService.getAll();
-      setCategories(data);
+      const data = await categoryService.getTree();
+      setCategories(data.map((category) => ({ ...category, subcategories: category.subcategories || [] })));
       setLoading(false);
     }
     load();
@@ -35,10 +35,12 @@ export default function CategoryManagementPage() {
     if (!editing) return;
     if (editing.isNew) {
       const created = await categoryService.create(editing);
-      setCategories([...categories, created]);
+      setCategories([...categories, { ...created, subcategories: created.subcategories || [] }]);
     } else {
       const updated = await categoryService.update(editing.id, editing);
-      setCategories(categories.map((c) => c.id === updated.id ? updated : c));
+      setCategories(categories.map((c) => c.id === updated.id
+        ? { ...c, ...updated, subcategories: c.subcategories || [] }
+        : c));
     }
     setEditing(null);
   };

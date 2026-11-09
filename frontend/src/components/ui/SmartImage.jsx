@@ -75,7 +75,7 @@ export default function SmartImage({
         src={src}
         alt={alt}
         loading={loading}
-        fetchpriority={fetchPriority}
+        fetchPriority={fetchPriority}
         sizes={sizes}
         srcSet={srcSet}
         onLoad={handleLoad}

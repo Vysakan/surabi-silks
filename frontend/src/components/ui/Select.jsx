@@ -7,6 +7,7 @@ export default function Select({
   options = [],
   placeholder = 'Select...',
   className,
+  value,
   ...props
 }) {
   return (
@@ -18,6 +19,7 @@ export default function Select({
       )}
       <div className="relative">
         <select
+          value={value ?? ''}
           className={cn(
             'w-full appearance-none rounded-[var(--radius-input)] border border-neutral-300 bg-white px-3 py-2.5 pr-10 text-sm text-neutral-800 transition-colors',
             'focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400',

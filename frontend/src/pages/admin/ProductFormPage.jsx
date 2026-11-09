@@ -86,18 +86,20 @@ export default function ProductFormPage() {
   };
 
   const handleImageUpload = (variantIndex, files) => {
-    Array.from(files).forEach((file) => {
+    const previews = Array.from(files).map((file) => new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const updated = [...form.variants];
-        updated[variantIndex] = {
-          ...updated[variantIndex],
-          images: [...updated[variantIndex].images.filter(Boolean), e.target.result],
-        };
-        setForm((prev) => ({ ...prev, variants: updated }));
-      };
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
       reader.readAsDataURL(file);
-    });
+    }));
+    Promise.all(previews).then((images) => {
+      setForm((prev) => ({
+        ...prev,
+        variants: prev.variants.map((variant, index) => index === variantIndex
+          ? { ...variant, images: [...(variant.images || []).filter(Boolean), ...images] }
+          : variant),
+      }));
+    }).catch(() => addToast({ type: 'error', message: 'Could not read the selected image.' }));
   };
 
   const removeImage = (variantIndex, imageIndex) => {
@@ -128,15 +130,21 @@ export default function ProductFormPage() {
       })),
     };
 
-    if (isEdit) {
-      await productService.update(id, payload);
-      addToast({ type: 'success', message: 'Product updated' });
-    } else {
-      await productService.create(payload);
-      addToast({ type: 'success', message: 'Product created' });
+    try {
+      if (isEdit) {
+        await productService.update(id, payload);
+        addToast({ type: 'success', message: 'Product updated' });
+      } else {
+        await productService.create(payload);
+        addToast({ type: 'success', message: 'Product created' });
+      }
+      navigate('/admin/products');
+    } catch (error) {
+      const message = error.response?.data?.error?.message || 'Could not save the product. Please check the details and try again.';
+      addToast({ type: 'error', message });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    navigate('/admin/products');
   };
 
   if (loading) return <LoadingSpinner />;

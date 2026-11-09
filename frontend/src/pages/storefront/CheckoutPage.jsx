@@ -40,6 +40,7 @@ export default function CheckoutPage() {
 
   const [step, setStep] = useState('form');
   const [placing, setPlacing] = useState(false);
+  const [orderError, setOrderError] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [errors, setErrors] = useState({});
   const [address, setAddress] = useState({
@@ -69,26 +70,24 @@ export default function CheckoutPage() {
   const handlePlaceOrder = async () => {
     if (!validate()) return;
     setPlacing(true);
-    await orderService.create({
-      customerId: user?.id || 'guest',
-      items: items.map((item) => ({
-        productId: item.productId,
-        variantId: item.variantId,
-        productName: item.productName,
-        variantLabel: item.variantLabel,
-        image: item.image,
-        unitPrice: item.unitPrice,
-        quantity: item.quantity,
-      })),
-      shippingAddress: address,
-      paymentMethod,
-      subtotal,
-      shipping,
-      total,
-    });
-    clearCart();
-    setStep('success');
-    setPlacing(false);
+    setOrderError('');
+    try {
+      await orderService.create({
+        customerId: user?.id || 'guest',
+        items: items.map(({ productId, variantId, quantity, ...item }) => ({ productId, variantId, quantity, ...item })),
+        shippingAddress: address,
+        paymentMethod,
+        subtotal,
+        shipping,
+        total,
+      });
+      await clearCart();
+      setStep('success');
+    } catch (error) {
+      setOrderError(error.response?.data?.error?.message || 'We could not place your order. Please try again.');
+    } finally {
+      setPlacing(false);
+    }
   };
 
   if (items.length === 0 && step !== 'success') {
@@ -224,6 +223,7 @@ export default function CheckoutPage() {
             >
               Place Order
             </Button>
+            {orderError && <p role="alert" className="text-sm text-red-600 mt-3">{orderError}</p>}
           </div>
         </div>
       </div>

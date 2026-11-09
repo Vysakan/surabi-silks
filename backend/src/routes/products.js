@@ -3,6 +3,7 @@ import { productController } from '../controllers/productController.js';
 import { validate, validateQuery } from '../middleware/validate.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { uploadSingle } from '../middleware/upload.js';
+import { reviewController } from '../controllers/reviewController.js';
 import { createProductSchema, updateProductSchema, productQuerySchema } from '../schemas/product.js';
 
 const router = Router();
@@ -13,6 +14,7 @@ router.get('/new-arrivals', productController.getNewArrivals);
 router.get('/bestsellers', productController.getBestsellers);
 router.get('/search', productController.search);
 router.get('/slug/:slug', productController.getBySlug);
+router.get('/:id/reviews', reviewController.getByProductId);
 router.get('/:id', productController.getById);
 router.get('/:id/related', productController.getRelated);
 

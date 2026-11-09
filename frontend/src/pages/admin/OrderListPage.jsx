@@ -56,6 +56,7 @@ export default function OrderListPage() {
 
   const columns = [
     { header: 'Order #', accessor: 'id', sortable: true },
+    { header: 'Customer', accessor: 'customerName', sortable: true, render: (row) => <div><p>{row.customerName}</p><p className="text-xs text-neutral-400">{row.customerEmail}</p></div> },
     {
       header: 'Date',
       accessor: 'createdAt',

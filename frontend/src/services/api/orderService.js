@@ -12,7 +12,7 @@ export async function getById(id) {
 
 export async function getByCustomerId(customerId) {
   const { data } = await apiClient.get('/orders', { params: { customerId } });
-  return data;
+  return data.items;
 }
 
 export async function create(orderData) {
