@@ -7,6 +7,10 @@
  *   node tests/smoke-test.mjs                          (tests http://localhost:3000)
  *   node tests/smoke-test.mjs http://127.0.0.1:3000    (or any other address)
  *
+ * When the website and the API are on different addresses (two subdomains), add the
+ * website's address as well. The test then also checks the CORS headers the browser needs:
+ *   node tests/smoke-test.mjs https://api.example.com https://shop.example.com
+ *
  * The admin checks log in as the demo admin from database/seed.sql. If you changed it,
  * set ADMIN_EMAIL and ADMIN_PASSWORD before running (PowerShell: $env:ADMIN_PASSWORD="...").
  *
@@ -17,6 +21,7 @@
 
 const BASE = (process.argv[2] || process.env.API_URL || 'http://localhost:3000').replace(/\/+$/, '');
 const API = `${BASE}/api/v1`;
+const ORIGIN = (process.argv[3] || process.env.FRONTEND_ORIGIN || '').replace(/\/+$/, '');
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@surabsilks.com';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const STAMP = Date.now().toString(36);
@@ -77,8 +82,8 @@ function expect(name, res, status, cond) {
   return check(name, good, `got HTTP ${res.status}: ${short(res.text)}`);
 }
 
-async function request(method, url, { json, raw, form, cookie } = {}) {
-  const headers = {};
+async function request(method, url, { json, raw, form, cookie, headers: extra } = {}) {
+  const headers = { ...extra };
   let body;
   if (form) {
     body = form;
@@ -105,6 +110,8 @@ async function request(method, url, { json, raw, form, cookie } = {}) {
 
 const api = (method, path, opts) => request(method, API + path, opts);
 const site = (method, path, opts) => request(method, BASE + path, opts);
+// Uploaded image URLs are either "/uploads/x.png" or a full "https://.../uploads/x.png".
+const fullUrl = (url) => (/^https?:\/\//i.test(url) ? url : BASE + url);
 
 function setCookies(res) {
   if (typeof res.headers.getSetCookie === 'function') return res.headers.getSetCookie();
@@ -137,6 +144,7 @@ async function stockOf(productId, variantId) {
 async function main() {
   console.log('Surabi Silks API smoke test');
   console.log(`Target: ${API}`);
+  if (ORIGIN) console.log(`Website: ${ORIGIN} (CORS checks on)`);
   let r;
 
   // ------------------------------------------------------------ 1
@@ -164,6 +172,24 @@ async function main() {
   for (const path of ['/api/config.php', '/api/src/bootstrap.php']) {
     r = await site('GET', path);
     check(`${path} cannot be read from the web`, !(r.status === 200 && /<\?php|password/i.test(r.text)), `got HTTP ${r.status}`);
+  }
+
+  if (ORIGIN) {
+    r = await api('OPTIONS', '/auth/login', {
+      headers: { Origin: ORIGIN, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'content-type' },
+    });
+    const allowed = (r.headers.get('access-control-allow-headers') || '').toLowerCase();
+    check(
+      `CORS: the browser may send logins from ${ORIGIN}`,
+      r.status < 300 && r.headers.get('access-control-allow-origin') === ORIGIN && r.headers.get('access-control-allow-credentials') === 'true' && allowed.includes('content-type'),
+      `got HTTP ${r.status}, Access-Control-Allow-Origin: ${r.headers.get('access-control-allow-origin')}, Allow-Credentials: ${r.headers.get('access-control-allow-credentials')}, Allow-Headers: ${allowed || '(none)'}`,
+    );
+    r = await api('GET', '/categories', { headers: { Origin: ORIGIN } });
+    check(
+      'CORS: API answers carry the website address and allow cookies',
+      r.headers.get('access-control-allow-origin') === ORIGIN && r.headers.get('access-control-allow-credentials') === 'true',
+      `got Access-Control-Allow-Origin: ${r.headers.get('access-control-allow-origin')}. Set 'cors' => ['origin' => '${ORIGIN}'] in api/config.php`,
+    );
   }
 
   // ------------------------------------------------------------ 2
@@ -356,11 +382,11 @@ async function main() {
     form.append('variantId', String(vMain));
     form.append('sortOrder', '0');
     r = await api('POST', `/products/${product.id}/images`, { cookie: admin, form });
-    expect('POST /products/:id/images uploads an image', r, 201, (b) => Number.isInteger(b.id) && /^\/uploads\/[^/]+\.png$/.test(b.url));
+    expect('POST /products/:id/images uploads an image', r, 201, (b) => Number.isInteger(b.id) && /^(https?:\/\/[^/]+)?\/uploads\/[^/]+\.png$/.test(b.url));
     image = r.status === 201 && r.json?.url ? r.json : null;
     if (image) {
-      r = await site('GET', image.url);
-      check('The uploaded image is served from /uploads', r.status === 200 && (r.headers.get('content-type') || '').startsWith('image/'), `got HTTP ${r.status}, ${r.headers.get('content-type')}`);
+      r = await request('GET', fullUrl(image.url));
+      check(`The uploaded image is served (${fullUrl(image.url)})`, r.status === 200 && (r.headers.get('content-type') || '').startsWith('image/'), `got HTTP ${r.status}, ${r.headers.get('content-type')}`);
       r = await api('GET', `/products/${product.id}`);
       expect('The image is attached to its variant', r, 200, (b) => variantOf(b, vMain)?.images.includes(image.url));
     }
@@ -560,7 +586,7 @@ async function main() {
   if (admin && image) {
     r = await api('DELETE', `/products/${product.id}/images/${image.id}`, { cookie: admin });
     expect('DELETE /products/:id/images/:imageId', r, 204);
-    r = await site('GET', image.url);
+    r = await request('GET', fullUrl(image.url));
     check('The image file is deleted', !(r.status === 200 && (r.headers.get('content-type') || '').startsWith('image/')), `got HTTP ${r.status}`);
   }
   if (admin && testProduct) {

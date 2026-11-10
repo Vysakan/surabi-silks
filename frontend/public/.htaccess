@@ -1,0 +1,29 @@
+# Surabi Silks website - public_html/surabhisilkstest/.htaccess
+# "npm run build" copies this file into dist/. Upload it together with the rest of dist/.
+
+Options -Indexes
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Always HTTPS: login only works when the website is opened over HTTPS.
+  RewriteCond %{HTTPS} off
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # React Router: real files are served as-is, every other address gets index.html
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Always fetch the newest index.html, so a new upload shows up straight away.
+# The files in assets/ have a new name on every build, so they can be cached.
+<IfModule mod_headers.c>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
