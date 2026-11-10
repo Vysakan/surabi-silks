@@ -19,6 +19,14 @@ return [
         'user'     => 'u000000000_surabi',
         'password' => 'CHANGE_ME',
     ],
+    //for local development only
+    // 'db' => [
+    //     'host'     => '127.0.0.1',
+    //     'port'     => 3306,
+    //     'name'     => 'surabi_php_test',
+    //     'user'     => 'root',
+    //     'password' => 'YOUR_LOCAL_MYSQL_ROOT_PASSWORD',
+    // ],
 
     'session' => [
         'max_age_hours' => 24,
