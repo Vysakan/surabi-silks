@@ -78,7 +78,7 @@ export default function LoginPage() {
           <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           <Button type="submit" isLoading={loading} className="w-full" size="lg">
-            <LogIn size={18} className="mr-2" /> Sign In
+            <LogIn size={18} className="mr-2" /> Sign Invghv
           </Button>
         </form>
 
@@ -88,7 +88,7 @@ export default function LoginPage() {
         </p>
 
         {/* Quick login for demo */}
-        <div className="mt-8 border-t border-neutral-100 pt-6">
+        {/* <div className="mt-8 border-t border-neutral-100 pt-6">
           <p className="text-xs text-neutral-400 text-center mb-3 uppercase tracking-wider">Quick Login (Demo)</p>
           <div className="flex gap-3">
             <Button
@@ -108,7 +108,7 @@ export default function LoginPage() {
               Admin
             </Button>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
