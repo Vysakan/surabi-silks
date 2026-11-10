@@ -1,0 +1,7 @@
+public_html/api/config.php
+public_html/api/storage/*
+!public_html/api/storage/.htaccess
+!public_html/api/storage/.gitkeep
+public_html/uploads/*
+!public_html/uploads/.htaccess
+!public_html/uploads/.gitkeep

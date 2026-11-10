@@ -1,0 +1,23 @@
+# Surabi Silks - Hostinger public_html/.htaccess
+# Serves the React build (index.html + assets) and routes /api/v1/* to the PHP backend.
+
+Options -Indexes
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # API -> PHP backend
+  RewriteRule ^api/v1(/.*)?$ api/index.php [L,QSA]
+
+  # Never expose backend internals or config
+  RewriteRule ^api/(src|storage)(/|$) - [F,L]
+  RewriteRule ^api/config(\.example)?\.php$ - [F,L]
+
+  # React Router: real files are served as-is, everything else gets index.html
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+  RewriteRule ^ index.html [L]
+</IfModule>
