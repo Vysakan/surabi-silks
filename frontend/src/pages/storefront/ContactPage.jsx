@@ -85,7 +85,7 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Cards */}
-      <section className="max-w-7xl mx-auto px-4 -mt-1">
+      <section className="max-w-7xl mx-auto px-4 mt-5">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
           {contactCards.map((card, i) => (
             <ScrollReveal key={card.title} delay={i * 100} className="bg-white border border-neutral-100 rounded-2xl p-6 text-center shadow-sm">

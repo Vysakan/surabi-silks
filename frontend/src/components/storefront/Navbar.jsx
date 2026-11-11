@@ -108,11 +108,11 @@ export default function Navbar() {
                 )}
               </div>
             ))}
-            {hasMoreCategories && (
+            {/* {hasMoreCategories && (
               <Link to="/categories" className="text-sm text-neutral-600 hover:text-neutral-900 py-5 transition-colors">
                 All Categories
               </Link>
-            )}
+            )} */}
             <Link to="/shop" className="text-sm text-neutral-600 hover:text-neutral-900 py-5 transition-colors">
               Shop All
             </Link>
