@@ -78,7 +78,7 @@ export default function LoginPage() {
           <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           <Button type="submit" isLoading={loading} className="w-full" size="lg">
-            <LogIn size={18} className="mr-2" /> Sign In
+            <LogIn size={18} className="mr-2" /> Sign Invghv
           </Button>
         </form>
 
