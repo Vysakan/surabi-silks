@@ -8,7 +8,8 @@ export default function ProtectedRoute({ role }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (role && user?.role !== role) {
+  const hasRole = !role || user?.role === role || (role === 'admin' && user?.role === 'root_admin');
+  if (!hasRole) {
     return <Navigate to="/" replace />;
   }
 

@@ -4,6 +4,7 @@ namespace App;
 
 use App\Controllers\AddressController;
 use App\Controllers\AuthController;
+use App\Controllers\AdminManagementController;
 use App\Controllers\CartController;
 use App\Controllers\CategoryController;
 use App\Controllers\OrderController;
@@ -26,7 +27,8 @@ final class Routes
         $r = new Router();
 
         $auth = [Auth::class, 'authenticate'];
-        $admin = Auth::requireRole('admin');
+        $admin = Auth::requireRole('admin', 'root_admin');
+        $rootAdmin = Auth::requireRole('root_admin');
         $body = function (Rule $schema) {
             return function (Request $req) use ($schema) {
                 $req->validated = $schema->parse($req->body());
@@ -50,8 +52,13 @@ final class Routes
         // Auth
         $r->post('/auth/register', [$authLimit, $body(S::register())], [AuthController::class, 'register']);
         $r->post('/auth/login', [$authLimit, $body(S::login())], [AuthController::class, 'login']);
+        $r->post('/auth/forgot-password', [$authLimit, $body(S::forgotPassword())], [AuthController::class, 'forgotPassword']);
+        $r->post('/auth/reset-password', [$authLimit, $body(S::resetPassword())], [AuthController::class, 'resetPassword']);
+        $r->put('/auth/password', [$auth, $body(S::changePassword())], [AuthController::class, 'changePassword']);
         $r->post('/auth/logout', [$auth], [AuthController::class, 'logout']);
         $r->get('/auth/me', [$auth], [AuthController::class, 'me']);
+        $r->get('/admin/admins', [$auth, $rootAdmin], [AdminManagementController::class, 'list']);
+        $r->post('/admin/admins', [$auth, $rootAdmin, $body(S::createAdmin())], [AdminManagementController::class, 'create']);
 
         // Products
         $r->get('/products', [$query(S::productQuery())], [ProductController::class, 'getAll']);

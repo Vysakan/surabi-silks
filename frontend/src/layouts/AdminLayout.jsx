@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router';
-import { LayoutDashboard, Package, FolderTree, ShoppingCart, Warehouse, Store, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, FolderTree, ShoppingCart, Warehouse, Store, LogOut, Shield } from 'lucide-react';
 import { useAuthStore } from '@/stores/useAuthStore';
+import * as authService from '@/services/authService';
 import { cn } from '@/lib/cn';
 
 const navItems = [
@@ -15,8 +16,11 @@ export default function AdminLayout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const logout = useAuthStore((s) => s.logout);
+  const user = useAuthStore((s) => s.user);
+  const items = user?.role === 'root_admin' ? [...navItems, { to: '/admin/admins', icon: Shield, label: 'Admin Management' }] : navItems;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try { await authService.logout(); } catch { /* Clear local state even if the API is unreachable. */ }
     logout();
     navigate('/login');
   };
@@ -26,7 +30,7 @@ export default function AdminLayout() {
       <aside className="w-64 bg-neutral-900 text-white p-4 shrink-0 hidden lg:block">
         <h2 className="text-lg font-semibold mb-8 px-3">Surabi Admin</h2>
         <nav className="space-y-1">
-          {navItems.map(({ to, icon: Icon, label, end }) => {
+          {items.map(({ to, icon: Icon, label, end }) => {
             const active = end ? pathname === to : pathname.startsWith(to);
             return (
               <Link
@@ -75,6 +79,14 @@ export default function AdminLayout() {
             <span className="hidden sm:inline">Logout</span>
           </button>
         </header>
+        <nav className="lg:hidden flex gap-2 overflow-x-auto bg-white border-b border-neutral-200 px-4 py-2">
+          {items.map(({ to, label, end }) => {
+            const active = end ? pathname === to : pathname.startsWith(to);
+            return <Link key={to} to={to} className={cn('shrink-0 rounded-lg px-3 py-2 text-sm', active ? 'bg-primary-50 text-primary-700' : 'text-neutral-600 hover:bg-neutral-50')}>
+              {label}
+            </Link>;
+          })}
+        </nav>
         <main className="flex-1 p-6 overflow-auto">
           <Outlet />
         </main>

@@ -23,7 +23,7 @@ export default function RegisterPage() {
     if (!isRequired(form.name)) e.name = 'Name is required';
     if (!isValidEmail(form.email)) e.email = 'Enter a valid email';
     if (!isValidPhone(form.phone)) e.phone = 'Enter a valid 10-digit phone';
-    if (!isMinLength(form.password, 6)) e.password = 'Minimum 6 characters';
+    if (!isMinLength(form.password, 8)) e.password = 'Minimum 8 characters';
     if (form.password !== form.confirm) e.confirm = 'Passwords do not match';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -33,18 +33,16 @@ export default function RegisterPage() {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    const user = await authService.register({
-      name: form.name,
-      email: form.email,
-      phone: form.phone,
-      password: form.password,
-    });
-    if (user) {
-      login(user);
-      addToast({ type: 'success', message: 'Account created successfully!' });
-      navigate('/');
-    }
-    setLoading(false);
+    try {
+      const user = await authService.register({ name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(), password: form.password });
+      if (user) {
+        login(user);
+        addToast({ type: 'success', message: 'Account created successfully!' });
+        navigate('/');
+      }
+    } catch (error) {
+      setErrors({ form: error.response?.data?.error?.message || error.message || 'Unable to create account.' });
+    } finally { setLoading(false); }
   };
 
   return (
@@ -56,6 +54,7 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {errors.form && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{errors.form}</div>}
           <Input label="Full Name" value={form.name} onChange={(e) => update('name', e.target.value)} error={errors.name} />
           <Input label="Email" type="email" value={form.email} onChange={(e) => update('email', e.target.value)} error={errors.email} />
           <Input label="Phone Number" value={form.phone} onChange={(e) => update('phone', e.target.value)} error={errors.phone} />

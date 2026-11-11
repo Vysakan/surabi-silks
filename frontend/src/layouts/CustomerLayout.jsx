@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router';
 import { User, MapPin, Package, Settings, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/stores/useAuthStore';
+import * as authService from '@/services/authService';
 import { cn } from '@/lib/cn';
 
 const navItems = [
@@ -14,7 +15,8 @@ export default function CustomerLayout() {
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try { await authService.logout(); } catch { /* Clear local state even if the API is unreachable. */ }
     logout();
     navigate('/');
   };

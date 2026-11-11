@@ -37,6 +37,8 @@ export const router = createBrowserRouter([
       { path: 'blog/:slug', ...p(() => import('@/pages/storefront/BlogArticlePage')) },
       { path: 'login', ...p(() => import('@/pages/auth/LoginPage')) },
       { path: 'register', ...p(() => import('@/pages/auth/RegisterPage')) },
+      { path: 'forgot-password', ...p(() => import('@/pages/auth/ForgotPasswordPage')) },
+      { path: 'reset-password', ...p(() => import('@/pages/auth/ResetPasswordPage')) },
       {
         path: 'account',
         element: <ProtectedRoute role="customer" />,
@@ -70,6 +72,7 @@ export const router = createBrowserRouter([
           { path: 'orders', ...p(() => import('@/pages/admin/OrderListPage')) },
           { path: 'orders/:id', ...p(() => import('@/pages/admin/OrderDetailPage')) },
           { path: 'inventory', ...p(() => import('@/pages/admin/InventoryPage')) },
+          { path: 'admins', ...p(() => import('@/pages/admin/AdminManagementPage')) },
         ],
       },
     ],

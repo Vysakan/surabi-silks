@@ -1,6 +1,6 @@
 -- Surabi Silks - full database schema (MySQL 8 / MariaDB 10.4+)
 -- Import this FIRST in Hostinger hPanel > Databases > phpMyAdmin > (your database) > Import.
--- It only creates tables (IF NOT EXISTS); it never deletes data. Same tables as backend/migrations/001-013.
+-- It only creates tables (IF NOT EXISTS); it never deletes data. Existing databases need migration 014.
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
@@ -10,13 +10,43 @@ CREATE TABLE IF NOT EXISTS users (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL,
+  recovery_email VARCHAR(255) DEFAULT NULL,
+  recovery_email_verified_at DATETIME DEFAULT NULL,
   phone VARCHAR(20) DEFAULT NULL,
   password_hash VARCHAR(255) NOT NULL,
-  role ENUM('customer', 'admin') NOT NULL DEFAULT 'customer',
+  role ENUM('customer', 'admin', 'root_admin') NOT NULL DEFAULT 'customer',
   avatar VARCHAR(500) DEFAULT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uk_users_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  token_hash CHAR(64) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  consumed_at DATETIME DEFAULT NULL,
+  request_ip VARCHAR(45) DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_password_reset_token_hash (token_hash),
+  INDEX idx_password_reset_user (user_id),
+  INDEX idx_password_reset_expiry (expires_at),
+  CONSTRAINT fk_password_reset_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS auth_audit_log (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED DEFAULT NULL,
+  actor_user_id INT UNSIGNED DEFAULT NULL,
+  event_type VARCHAR(64) NOT NULL,
+  ip_address VARCHAR(45) DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_auth_audit_user_created (user_id, created_at),
+  INDEX idx_auth_audit_actor_created (actor_user_id, created_at),
+  INDEX idx_auth_audit_event_created (event_type, created_at),
+  CONSTRAINT fk_auth_audit_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_auth_audit_actor FOREIGN KEY (actor_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 002_create_sessions.sql

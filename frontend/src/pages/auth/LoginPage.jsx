@@ -21,7 +21,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
 
   if (isAuthenticated) {
-    return <Navigate to={user?.role === 'admin' ? '/admin' : '/account'} replace />;
+    return <Navigate to={user?.role === 'admin' || user?.role === 'root_admin' ? '/admin' : '/account'} replace />;
   }
 
   const handleSubmit = async (e) => {
@@ -35,7 +35,7 @@ export default function LoginPage() {
         syncWishlist();
         syncCart();
         addToast({ type: 'success', message: `Welcome back, ${user.name}!` });
-        navigate(user.role === 'admin' ? '/admin' : '/');
+        navigate(user.role === 'admin' || user.role === 'root_admin' ? '/admin' : '/');
       } else {
         setError('Invalid email or password');
       }
@@ -56,7 +56,7 @@ export default function LoginPage() {
       syncWishlist();
       syncCart();
       addToast({ type: 'success', message: `Welcome, ${user.name}!` });
-      navigate(user.role === 'admin' ? '/admin' : '/');
+      navigate(user.role === 'admin' || user.role === 'root_admin' ? '/admin' : '/');
     } catch {
       setError('Quick login failed. Check dummy credentials.');
     }
@@ -77,8 +77,9 @@ export default function LoginPage() {
           )}
           <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <div className="text-right"><Link to="/forgot-password" className="text-sm text-primary-600 hover:underline">Forgot password?</Link></div>
           <Button type="submit" isLoading={loading} className="w-full" size="lg">
-            <LogIn size={18} className="mr-2" /> Sign Invghv
+            <LogIn size={18} className="mr-2" /> Sign In
           </Button>
         </form>
 

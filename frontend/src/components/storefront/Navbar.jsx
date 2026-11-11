@@ -4,6 +4,7 @@ import { Search, Heart, ShoppingBag, User, Menu, X, ChevronDown } from 'lucide-r
 import { useCartStore } from '@/stores/useCartStore';
 import { useWishlistStore } from '@/stores/useWishlistStore';
 import { useAuthStore } from '@/stores/useAuthStore';
+import * as authService from '@/services/authService';
 import { useUIStore } from '@/stores/useUIStore';
 import { categories } from '@/data/categories';
 import { cn } from '@/lib/cn';
@@ -240,7 +241,8 @@ export default function Navbar() {
                   <Link to="/account" onClick={toggleMobileMenu} className="block px-3 py-2.5 text-sm text-neutral-600 hover:bg-neutral-50 rounded-lg">My Account</Link>
                   <Link to="/account/orders" onClick={toggleMobileMenu} className="block px-3 py-2.5 text-sm text-neutral-600 hover:bg-neutral-50 rounded-lg">My Orders</Link>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
+                      try { await authService.logout(); } catch { /* Clear local state even if the API is unreachable. */ }
                       useAuthStore.getState().logout();
                       toggleMobileMenu();
                       navigate('/');

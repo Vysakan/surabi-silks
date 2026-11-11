@@ -13,9 +13,9 @@ final class Schemas
     public static function register(): Rule
     {
         return Rule::obj([
-            'name' => Rule::str()->min(2)->max(255),
-            'email' => Rule::str()->email()->max(255),
-            'phone' => Rule::str()->min(10)->max(20)->optional(),
+            'name' => Rule::str()->trimmed()->min(2)->max(255),
+            'email' => Rule::str()->trimmed()->email()->max(255),
+            'phone' => Rule::str()->trimmed()->min(10)->max(20)->optional(),
             'password' => Rule::str()->min(8)->max(128),
         ]);
     }
@@ -25,6 +25,37 @@ final class Schemas
         return Rule::obj([
             'email' => Rule::str()->email(),
             'password' => Rule::str()->min(1),
+        ]);
+    }
+
+    public static function forgotPassword(): Rule
+    {
+        return Rule::obj(['email' => Rule::str()->email()->max(255)]);
+    }
+
+    public static function resetPassword(): Rule
+    {
+        return Rule::obj([
+            'token' => Rule::str()->min(40)->max(100),
+            'password' => Rule::str()->min(8)->max(128),
+        ]);
+    }
+
+    public static function changePassword(): Rule
+    {
+        return Rule::obj([
+            'currentPassword' => Rule::str()->min(1)->max(128),
+            'newPassword' => Rule::str()->min(8)->max(128),
+        ]);
+    }
+
+    public static function createAdmin(): Rule
+    {
+        return Rule::obj([
+            'name' => Rule::str()->trimmed()->min(2)->max(255),
+            'email' => Rule::str()->email()->max(255),
+            'phone' => Rule::str()->trimmed()->min(10)->max(20)->optional(),
+            'password' => Rule::str()->min(12)->max(128),
         ]);
     }
 

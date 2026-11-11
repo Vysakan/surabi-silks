@@ -32,6 +32,15 @@ return [
         'max_age_hours' => 24,
     ],
 
+    // Set a real sender hosted on this account, and the public React reset page URL.
+    // Password reset deliberately sends no links until both settings are configured.
+    'mail' => [
+        'from' => '',
+    ],
+    'app' => [
+        'reset_url' => '',
+    ],
+
     // Only needed when the website and the API are on DIFFERENT domains.
     // Leave '' when both are served from the same Hostinger site (the normal setup).
     // For local development with Vite use 'http://localhost:5173'.

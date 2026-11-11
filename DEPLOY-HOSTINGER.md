@@ -102,12 +102,15 @@ DELETE FROM products WHERE slug LIKE 'smoke-test-saree-%';
 
 ## Before real customers use it
 
-- **Remove the demo logins.** Register your own account on the website, then make it the admin and delete the demo users in phpMyAdmin → SQL:
+- **Apply the authentication migration.** Run `backend-php/database/migrations/014_auth_admin_security.sql` once in phpMyAdmin. Fresh databases imported from the updated PHP `database/schema.sql` already have these tables and columns.
+- **Configure password recovery email.** In `api/config.php`, set `mail.from` to a working domain mailbox and `app.reset_url` to `https://surabhisilkstest.semicoloninnovations.in/reset-password`. Verify Hostinger PHP `mail()` delivers before relying on recovery.
+- Register your owner account. Upload `backend-php/scripts/root-admin.php` to a private server directory outside `public_html`, preserving the sibling `public_html/api` path. With Hostinger SSH, run `php root-admin.php bootstrap you@yourmail.com` and confirm a mailbox you control. This grants Root Admin through the operator CLI, with no public bootstrap endpoint. If email recovery is unavailable, run `php root-admin.php reset you@yourmail.com`; it prompts for a new password and revokes that account's sessions.
+- **Remove the demo logins** after confirming they are not needed:
   ```sql
-  UPDATE users SET role = 'admin' WHERE email = 'you@yourmail.com';
   DELETE FROM users WHERE email IN ('admin@surabsilks.com','priya@example.com','anitha@example.com','meera@example.com','deepa@example.com');
   ```
   If MySQL refuses because a demo user has orders, delete those orders first.
+- Create future Admin accounts from the Root Admin dashboard under **Admin Management**. Normal Admins cannot use that API.
 - **Moving the website to the main domain later?** Change the three addresses: `cors.origin` and `upload.url_prefix` in `api/config.php`, and `VITE_API_BASE` in `frontend/.env.production`. Then build and upload again.
 
 ## Updating later

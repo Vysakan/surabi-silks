@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuthStore } from '@/stores/useAuthStore';
+import * as authService from '@/services/authService';
 import { useUIStore } from '@/stores/useUIStore';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -12,21 +13,28 @@ export default function SettingsPage() {
   const addToast = useUIStore((s) => s.addToast);
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
 
-  const handleChangePassword = (e) => {
+  const handleChangePassword = async (e) => {
     e.preventDefault();
     if (passwords.new !== passwords.confirm) {
       addToast({ type: 'error', message: 'Passwords do not match' });
       return;
     }
-    if (passwords.new.length < 6) {
-      addToast({ type: 'error', message: 'Password must be at least 6 characters' });
+    if (passwords.new.length < 8) {
+      addToast({ type: 'error', message: 'Password must be at least 8 characters' });
       return;
     }
-    addToast({ type: 'success', message: 'Password changed (demo)' });
-    setPasswords({ current: '', new: '', confirm: '' });
+    try {
+      await authService.changePassword(passwords.current, passwords.new);
+      logout();
+      addToast({ type: 'success', message: 'Password changed. Please sign in again.' });
+      navigate('/login');
+    } catch (error) {
+      addToast({ type: 'error', message: error.response?.data?.error?.message || error.message || 'Unable to change password.' });
+    }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try { await authService.logout(); } catch { /* Clear local state even if the API is unreachable. */ }
     logout();
     addToast({ type: 'success', message: 'Logged out' });
     navigate('/');
@@ -44,18 +52,26 @@ export default function SettingsPage() {
             <Input
               label="Current Password"
               type="password"
+              autoComplete="current-password"
+              required
               value={passwords.current}
               onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
             />
             <Input
               label="New Password"
               type="password"
+              autoComplete="new-password"
+              minLength={8}
+              maxLength={128}
+              required
               value={passwords.new}
               onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
             />
             <Input
               label="Confirm New Password"
               type="password"
+              autoComplete="new-password"
+              required
               value={passwords.confirm}
               onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
             />

@@ -28,6 +28,18 @@ backend-php/
 
 ## Deploy to Hostinger (step by step)
 
+### Authentication and admin security upgrade
+
+For an existing database, back it up and run `database/migrations/014_auth_admin_security.sql` once in phpMyAdmin. It adds root-admin support, recovery-token storage, verified recovery-email fields, and auth audit events without deleting existing users. For a fresh install, the current `database/schema.sql` already includes these structures.
+
+Configure `mail.from` in `api/config.php` to a sender mailbox hosted and authenticated for your domain, and set `app.reset_url` to `https://<your-store-domain>/reset-password`. Hostinger PHP `mail()` must be working for recovery links to arrive. Until both values are configured, reset requests still return a generic success response but no email is sent; the PHP error log records the missing configuration.
+
+After the migration, upload `scripts/root-admin.php` to a private directory outside `public_html`, preserving its sibling `public_html/api` path. Register the initial account, then using Hostinger SSH and the account's PHP CLI run `php root-admin.php bootstrap owner@your-domain` and confirm the recovery mailbox. You may pass a separate recovery mailbox as the optional third argument. This promotes the selected existing account, marks the operator-confirmed recovery address verified, and logs the action. If email recovery is unavailable later, run `php root-admin.php reset owner@your-domain`; enter the new password at the private CLI prompt. This revokes all of that account's sessions. Never place the script under `public_html`.
+
+The shared `/forgot-password` and `/reset-password` pages support customer, admin, and Root Admin recovery. Root Admin requests must use the configured verified recovery email. Tokens are single-use, expire after 30 minutes, and only SHA-256 token hashes are stored. Successful resets revoke all sessions. Customer account Settings also supports an authenticated current-password change; it audits the change and revokes sessions before requiring a fresh sign in.
+
+Only the Root Admin can call the admin creation API. Normal Admins cannot create admin accounts, even if they modify frontend state or call the endpoint directly.
+
 ### 1. Create the database
 1. In **hPanel**, go to **Databases → MySQL Databases**.
 2. Create a database and a user, for example `u123456789_surabi`, and pick a strong password.

@@ -32,6 +32,18 @@ export async function register(data) {
   return user;
 }
 
+export async function forgotPassword() {
+  throw new Error('Password recovery is available when connected to the live API.');
+}
+
+export async function resetPassword() {
+  throw new Error('Password recovery is available when connected to the live API.');
+}
+
+export async function changePassword() {
+  throw new Error('Password management is available when connected to the live API.');
+}
+
 export async function logout() {
   await delay(100);
   return true;
