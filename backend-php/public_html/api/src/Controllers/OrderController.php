@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Http\HttpError;
 use App\Http\Request;
 use App\Repositories\OrderRepository;
+use App\Support\Auth;
 
 final class OrderController
 {
@@ -59,6 +60,6 @@ final class OrderController
 
     private static function scope(Request $req): ?int
     {
-        return $req->user['role'] === 'admin' ? null : $req->user['id'];
+        return Auth::isStaff($req->user['role']) ? null : $req->user['id'];
     }
 }

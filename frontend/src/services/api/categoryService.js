@@ -29,3 +29,13 @@ export async function remove(id) {
   await apiClient.delete(`/categories/${id}`);
   return true;
 }
+
+/** Uploads a category image file and returns its URL (save the category with it afterwards). */
+export async function uploadImage(file) {
+  const formData = new FormData();
+  formData.append('image', file);
+  const { data } = await apiClient.post('/categories/images', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data.url;
+}

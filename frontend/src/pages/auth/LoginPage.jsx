@@ -1,16 +1,34 @@
 import { useState } from 'react';
-import { Link, useNavigate, Navigate } from 'react-router';
+import { Link, useNavigate, useLocation, Navigate } from 'react-router';
 import { LogIn } from 'lucide-react';
 import * as authService from '@/services/authService';
+import { PROVIDER } from '@/services/_provider';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useWishlistStore } from '@/stores/useWishlistStore';
 import { useCartStore } from '@/stores/useCartStore';
 import { useUIStore } from '@/stores/useUIStore';
+import { getErrorMessage } from '@/lib/apiError';
+import { isStaff } from '@/lib/roles';
+import { isValidEmail } from '@/lib/validators';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import PasswordInput from '@/components/ui/PasswordInput';
+
+// The demo shortcuts only exist with the built-in demo data, never with the real API.
+const SHOW_DEMO_LOGIN = PROVIDER === 'dummy';
+
+/** Where to go after signing in: back to the page that asked for a login, if this user may open it. */
+function destinationFor(user, from) {
+  if (typeof from === 'string' && from.startsWith('/') && !from.startsWith('//')) {
+    const adminPage = from.startsWith('/admin');
+    if (adminPage === isStaff(user)) return from;
+  }
+  return isStaff(user) ? '/admin' : '/';
+}
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, user, login } = useAuthStore();
   const syncWishlist = useWishlistStore((s) => s.syncFromServer);
   const syncCart = useCartStore((s) => s.syncFromServer);
@@ -21,46 +39,42 @@ export default function LoginPage() {
   const [error, setError] = useState('');
 
   if (isAuthenticated) {
-    return <Navigate to={user?.role === 'admin' || user?.role === 'root_admin' ? '/admin' : '/account'} replace />;
+    return <Navigate to={destinationFor(user, location.state?.from)} replace />;
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const signIn = async (signInEmail, signInPassword) => {
     setError('');
     setLoading(true);
     try {
-      const user = await authService.login(email, password);
-      if (user) {
-        login(user);
-        syncWishlist();
-        syncCart();
-        addToast({ type: 'success', message: `Welcome back, ${user.name}!` });
-        navigate(user.role === 'admin' || user.role === 'root_admin' ? '/admin' : '/');
-      } else {
-        setError('Invalid email or password');
-      }
-    } catch {
-      setError('Something went wrong. Please try again.');
-    }
-    setLoading(false);
-  };
-
-  const quickLogin = async (quickEmail, quickPassword) => {
-    setEmail(quickEmail);
-    setPassword(quickPassword);
-    setError('');
-    setLoading(true);
-    try {
-      const user = await authService.login(quickEmail, quickPassword);
-      login(user);
+      const signedIn = await authService.login(signInEmail.trim(), signInPassword);
+      login(signedIn);
       syncWishlist();
       syncCart();
-      addToast({ type: 'success', message: `Welcome, ${user.name}!` });
-      navigate(user.role === 'admin' || user.role === 'root_admin' ? '/admin' : '/');
-    } catch {
-      setError('Quick login failed. Check dummy credentials.');
+      addToast({ type: 'success', message: `Welcome back, ${signedIn.name}!` });
+      navigate(destinationFor(signedIn, location.state?.from), { replace: true });
+    } catch (err) {
+      setError(getErrorMessage(err, 'Could not sign in. Please try again.'));
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!isValidEmail(email.trim())) {
+      setError('Enter a valid email address');
+      return;
+    }
+    if (!password) {
+      setError('Enter your password');
+      return;
+    }
+    signIn(email, password);
+  };
+
+  const quickLogin = (quickEmail, quickPassword) => {
+    setEmail(quickEmail);
+    setPassword(quickPassword);
+    signIn(quickEmail, quickPassword);
   };
 
   return (
@@ -71,13 +85,31 @@ export default function LoginPage() {
           <p className="text-neutral-500 mt-1">Sign in to your Surabi Silks account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           {error && (
-            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>
+            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg" role="alert">{error}</div>
           )}
-          <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          <div className="text-right"><Link to="/forgot-password" className="text-sm text-primary-600 hover:underline">Forgot password?</Link></div>
+          <Input
+            label="Email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <div>
+            <PasswordInput
+              label="Password"
+              name="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <div className="text-right mt-2">
+              <Link to="/forgot-password" className="text-sm text-primary-600 hover:underline">
+                Forgot password?
+              </Link>
+            </div>
+          </div>
           <Button type="submit" isLoading={loading} className="w-full" size="lg">
             <LogIn size={18} className="mr-2" /> Sign In
           </Button>
@@ -88,28 +120,29 @@ export default function LoginPage() {
           <Link to="/register" className="text-primary-600 font-medium hover:underline">Register</Link>
         </p>
 
-        {/* Quick login for demo */}
-        {/* <div className="mt-8 border-t border-neutral-100 pt-6">
-          <p className="text-xs text-neutral-400 text-center mb-3 uppercase tracking-wider">Quick Login (Demo)</p>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => quickLogin('priya@example.com', 'password123')}
-              disabled={loading}
-            >
-              Customer
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => quickLogin('admin@surabsilks.com', 'admin123')}
-              disabled={loading}
-            >
-              Admin
-            </Button>
+        {SHOW_DEMO_LOGIN && (
+          <div className="mt-8 border-t border-neutral-100 pt-6">
+            <p className="text-xs text-neutral-400 text-center mb-3 uppercase tracking-wider">Quick Login (Demo data only)</p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => quickLogin('priya@example.com', 'password123')}
+                disabled={loading}
+              >
+                Customer
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => quickLogin('admin@surabsilks.com', 'admin123')}
+                disabled={loading}
+              >
+                Admin
+              </Button>
+            </div>
           </div>
-        </div> */}
+        )}
       </div>
     </div>
   );

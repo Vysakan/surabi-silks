@@ -10,3 +10,4 @@ export const getTree = impl.getTree;
 export const create = impl.create;
 export const update = impl.update;
 export const remove = impl.remove;
+export const uploadImage = impl.uploadImage;

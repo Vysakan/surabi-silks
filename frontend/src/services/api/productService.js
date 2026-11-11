@@ -1,7 +1,13 @@
 import { apiClient } from './client.js';
 
-export async function getAll(params) {
-  const { data } = await apiClient.get('/products', { params });
+/** Accepts { page, limit, sort, filters: { categoryId, subcategoryId, priceMin, priceMax, colors[], fabrics[], occasions[], search } }. */
+export async function getAll({ filters, ...params } = {}) {
+  const query = { ...params };
+  for (const [key, value] of Object.entries(filters || {})) {
+    if (value == null || value === '' || (Array.isArray(value) && value.length === 0)) continue;
+    query[key] = Array.isArray(value) ? value.join(',') : value;
+  }
+  const { data } = await apiClient.get('/products', { params: query });
   return data;
 }
 
@@ -57,14 +63,19 @@ export async function update(id, productData) {
   return data;
 }
 
+const isServerImage = (image) => typeof image === 'string' && /^(https?:\/\/|\/)/i.test(image);
+const isNewImage = (image) => typeof image === 'string' && image.startsWith('data:image/');
+
+/** Uploads the images picked in the form (data: URLs). Images already on the server are kept via the payload. */
 async function uploadVariantImages(product, sourceVariants = []) {
   for (const [index, variant] of (product.variants || []).entries()) {
-    const images = sourceVariants[index]?.images || [];
+    const images = (sourceVariants[index]?.images || []).filter(Boolean);
     for (const [sortOrder, image] of images.entries()) {
-      if (!image || (!image.startsWith('data:image/') && !image.startsWith('/'))) continue;
+      if (!isNewImage(image)) continue;
       const blob = await fetch(image).then((response) => response.blob());
+      const extension = (blob.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
       const formData = new FormData();
-      formData.append('image', blob, `product-${product.id}-image-${sortOrder}.jpg`);
+      formData.append('image', blob, `product-${product.id}-image-${sortOrder}.${extension}`);
       formData.append('variantId', String(variant.id));
       formData.append('sortOrder', String(sortOrder));
       await apiClient.post(`/products/${product.id}/images`, formData, {
@@ -83,7 +94,7 @@ function toApiProduct(product) {
   const payload = {
     ...product,
     categoryId: Number(product.categoryId),
-    subcategoryId: product.subcategoryId ? Number(product.subcategoryId) : undefined,
+    subcategoryId: product.subcategoryId ? Number(product.subcategoryId) : null,
     occasions: product.occasions || product.occasion || [],
     variants: (product.variants || []).map((variant) => ({
       colorName: variant.color?.name ?? variant.colorName ?? '',
@@ -94,8 +105,13 @@ function toApiProduct(product) {
       mrp: Number(variant.mrp) > 0 ? Number(variant.mrp) : undefined,
       stock: Number(variant.stock) || 0,
       sku: variant.sku || '',
+      images: (variant.images || []).filter(isServerImage),
     })),
   };
   delete payload.occasion;
+  // Empty optional text fields come back from the API as null; the API only accepts text or "not sent".
+  for (const key of ['description', 'shortDescription', 'fabric', 'weave', 'weight', 'careInstructions']) {
+    if (payload[key] == null) delete payload[key];
+  }
   return payload;
 }

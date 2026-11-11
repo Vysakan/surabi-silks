@@ -3,8 +3,9 @@ import { useParams, useNavigate } from 'react-router';
 import { ArrowLeft, Plus, Trash2, Upload, X } from 'lucide-react';
 import { Link } from 'react-router';
 import * as productService from '@/services/productService';
-import * as categoryService from '@/services/categoryService';
-import { slugify } from '@/lib/formatters';
+import { refreshCategoryTree } from '@/hooks/useCategoryTree';
+import { getErrorMessage } from '@/lib/apiError';
+import { toSlug } from '@/lib/validators';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Input';
@@ -23,6 +24,25 @@ const EMPTY_VARIANT = {
   sku: '',
   images: [''],
 };
+
+// Optional text fields: the API returns null when empty, the inputs need ''.
+const TEXT_FIELDS = ['description', 'shortDescription', 'fabric', 'weave', 'weight', 'careInstructions'];
+
+/**
+ * Category + subcategory for the form. Older products may have a subcategory saved as their
+ * category (the old form listed both in one dropdown); those are moved under the right main category.
+ */
+function placeInTree(tree, categoryId, subcategoryId) {
+  if (categoryId == null || categoryId === '') return { categoryId: '', subcategoryId: '' };
+  const main = tree.find((c) => String(c.id) === String(categoryId));
+  if (main) {
+    const sub = main.subcategories.find((s) => String(s.id) === String(subcategoryId));
+    return { categoryId: String(main.id), subcategoryId: sub ? String(sub.id) : '' };
+  }
+  const parent = tree.find((c) => c.subcategories.some((s) => String(s.id) === String(categoryId)));
+  if (parent) return { categoryId: String(parent.id), subcategoryId: String(categoryId) };
+  return { categoryId: '', subcategoryId: '' };
+}
 
 export default function ProductFormPage() {
   const { id } = useParams();
@@ -44,25 +64,41 @@ export default function ProductFormPage() {
 
   useEffect(() => {
     async function load() {
-      const cats = await categoryService.getAll();
-      setCategories(cats);
+      let tree = [];
+      try {
+        tree = await refreshCategoryTree(); // main categories, each with its subcategories
+      } catch {
+        addToast({ type: 'error', message: 'Could not load the categories. Refresh the page to try again.' });
+      }
+      setCategories(tree);
       if (isEdit) {
-        const product = await productService.getById(id);
-        if (product) {
-          setForm({
-            ...product,
-            tags: product.tags?.join(', ') || '',
-            occasion: product.occasion?.join(', ') || '',
-            basePrice: product.basePrice || '',
-          });
+        try {
+          const product = await productService.getById(id);
+          if (product) {
+            const { categoryId, subcategoryId } = placeInTree(tree, product.categoryId, product.subcategoryId);
+            setForm({
+              ...product,
+              ...Object.fromEntries(TEXT_FIELDS.map((key) => [key, product[key] ?? ''])),
+              categoryId,
+              subcategoryId,
+              tags: product.tags?.join(', ') || '',
+              occasion: product.occasion?.join(', ') || '',
+              basePrice: product.basePrice || '',
+            });
+          }
+        } catch (error) {
+          addToast({ type: 'error', message: getErrorMessage(error, 'Could not load the product.') });
         }
         setLoading(false);
       }
     }
     load();
-  }, [id, isEdit]);
+  }, [id, isEdit, addToast]);
 
   const updateField = (field, value) => setForm({ ...form, [field]: value });
+
+  // A new category means the old subcategory no longer applies.
+  const changeCategory = (value) => setForm({ ...form, categoryId: value, subcategoryId: '' });
 
   const updateVariant = (index, field, value) => {
     const variants = [...form.variants];
@@ -113,10 +149,18 @@ export default function ProductFormPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.name.trim()) {
+      addToast({ type: 'error', message: 'Enter a product name' });
+      return;
+    }
+    if (!form.categoryId) {
+      addToast({ type: 'error', message: 'Choose a category' });
+      return;
+    }
     setSaving(true);
     const payload = {
       ...form,
-      slug: form.slug || slugify(form.name),
+      slug: form.slug || toSlug(form.name),
       basePrice: Number(form.basePrice) || 0,
       tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
       occasion: form.occasion.split(',').map((t) => t.trim()).filter(Boolean),
@@ -140,8 +184,7 @@ export default function ProductFormPage() {
       }
       navigate('/admin/products');
     } catch (error) {
-      const message = error.response?.data?.error?.message || 'Could not save the product. Please check the details and try again.';
-      addToast({ type: 'error', message });
+      addToast({ type: 'error', message: getErrorMessage(error, 'Could not save the product. Please check the details and try again.') });
     } finally {
       setSaving(false);
     }
@@ -149,8 +192,11 @@ export default function ProductFormPage() {
 
   if (loading) return <LoadingSpinner />;
 
-  const selectedCat = categories.find((c) => c.id === form.categoryId);
+  const selectedCat = categories.find((c) => String(c.id) === String(form.categoryId));
   const subcategories = selectedCat?.subcategories || [];
+  let subcategoryPlaceholder = 'None (optional)';
+  if (!selectedCat) subcategoryPlaceholder = 'Choose a category first';
+  else if (!subcategories.length) subcategoryPlaceholder = 'No subcategories in this category';
 
   return (
     <div>
@@ -169,15 +215,18 @@ export default function ProductFormPage() {
             <Input label="Slug" value={form.slug} onChange={(e) => updateField('slug', e.target.value)} placeholder="auto-generated from name" />
             <Select
               label="Category"
-              options={[{ value: '', label: 'Select category' }, ...categories.map((c) => ({ value: c.id, label: c.name }))]}
-              value={form.categoryId}
-              onChange={(e) => updateField('categoryId', e.target.value)}
+              placeholder="Select category"
+              options={categories.map((c) => ({ value: String(c.id), label: c.name }))}
+              value={form.categoryId === '' || form.categoryId == null ? '' : String(form.categoryId)}
+              onChange={(e) => changeCategory(e.target.value)}
             />
             <Select
               label="Subcategory"
-              options={[{ value: '', label: 'Select subcategory' }, ...subcategories.map((s) => ({ value: s.id, label: s.name }))]}
-              value={form.subcategoryId}
+              placeholder={subcategoryPlaceholder}
+              options={subcategories.map((s) => ({ value: String(s.id), label: s.name }))}
+              value={form.subcategoryId === '' || form.subcategoryId == null ? '' : String(form.subcategoryId)}
               onChange={(e) => updateField('subcategoryId', e.target.value)}
+              disabled={!selectedCat || !subcategories.length}
             />
           </div>
           <Textarea label="Description" value={form.description} onChange={(e) => updateField('description', e.target.value)} rows={3} />

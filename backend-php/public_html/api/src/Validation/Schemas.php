@@ -9,13 +9,17 @@ final class Schemas
     private const HEX = '/^#[0-9a-fA-F]{6}$/D';
     private const ORDER_STATUSES = ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled'];
 
-    // auth.js
+    // auth.js (+ password reset, change password)
+    private const PHONE = '/^\+?[0-9][0-9 \-]{8,18}[0-9]$/D';
+    private const TOKEN = '/^[A-Za-z0-9_\-]+$/D';
+    private const IMAGE_URL = '#^(https?://|/)[^\s"\'<>]+$#iD';
+
     public static function register(): Rule
     {
         return Rule::obj([
-            'name' => Rule::str()->trimmed()->min(2)->max(255),
+            'name' => Rule::str()->trimmed()->min(2)->max(100),
             'email' => Rule::str()->trimmed()->email()->max(255),
-            'phone' => Rule::str()->trimmed()->min(10)->max(20)->optional(),
+            'phone' => Rule::str()->trimmed()->min(10)->max(20)->regex(self::PHONE)->optional(),
             'password' => Rule::str()->min(8)->max(128),
         ]);
     }
@@ -23,20 +27,29 @@ final class Schemas
     public static function login(): Rule
     {
         return Rule::obj([
-            'email' => Rule::str()->email(),
-            'password' => Rule::str()->min(1),
+            'email' => Rule::str()->trimmed()->email()->max(255),
+            'password' => Rule::str()->min(1)->max(128),
         ]);
     }
 
     public static function forgotPassword(): Rule
     {
-        return Rule::obj(['email' => Rule::str()->email()->max(255)]);
+        return Rule::obj([
+            'email' => Rule::str()->trimmed()->email()->max(255),
+        ]);
+    }
+
+    public static function resetToken(): Rule
+    {
+        return Rule::obj([
+            'token' => Rule::str()->trimmed()->min(32)->max(128)->regex(self::TOKEN),
+        ]);
     }
 
     public static function resetPassword(): Rule
     {
         return Rule::obj([
-            'token' => Rule::str()->min(40)->max(100),
+            'token' => Rule::str()->trimmed()->min(32)->max(128)->regex(self::TOKEN),
             'password' => Rule::str()->min(8)->max(128),
         ]);
     }
@@ -49,13 +62,31 @@ final class Schemas
         ]);
     }
 
-    public static function createAdmin(): Rule
+    // admin users (root admin only)
+    public static function adminUserQuery(): Rule
     {
         return Rule::obj([
-            'name' => Rule::str()->trimmed()->min(2)->max(255),
-            'email' => Rule::str()->email()->max(255),
-            'phone' => Rule::str()->trimmed()->min(10)->max(20)->optional(),
-            'password' => Rule::str()->min(12)->max(128),
+            'group' => Rule::oneOf(['staff', 'customer', 'all'])->withDefault('staff'),
+            'search' => Rule::str()->max(100)->optional(),
+            'page' => Rule::coerceNum()->integer()->min(1)->withDefault(1),
+            'limit' => Rule::coerceNum()->integer()->min(1)->max(100)->withDefault(50),
+        ]);
+    }
+
+    public static function adminCreateUser(): Rule
+    {
+        return Rule::obj([
+            'name' => Rule::str()->trimmed()->min(2)->max(100),
+            'email' => Rule::str()->trimmed()->email()->max(255),
+            'role' => Rule::oneOf(['admin', 'superadmin'])->withDefault('admin'),
+        ]);
+    }
+
+    public static function adminUpdateUser(): Rule
+    {
+        return Rule::obj([
+            'role' => Rule::oneOf(['customer', 'admin', 'superadmin'])->optional(),
+            'isActive' => Rule::bool()->optional(),
         ]);
     }
 
@@ -92,16 +123,16 @@ final class Schemas
         ]);
     }
 
-    // category.js
+    // category.js (image is checked in CategoryController so the message can say what to do)
     public static function createCategory(): Rule
     {
         return Rule::obj([
-            'name' => Rule::str()->min(1)->max(255),
-            'slug' => Rule::str()->min(1)->max(255)->regex(self::SLUG),
-            'image' => Rule::str()->max(500)->optional(),
-            'description' => Rule::str()->optional(),
+            'name' => Rule::str()->trimmed()->min(1)->max(255),
+            'slug' => Rule::str()->trimmed()->min(1)->max(255)->regex(self::SLUG),
+            'image' => Rule::str()->max(500)->nullable()->optional(),
+            'description' => Rule::str()->max(5000)->nullable()->optional(),
             'parentId' => Rule::num()->integer()->positive()->nullable()->withDefault(null),
-            'sortOrder' => Rule::num()->integer()->min(0)->withDefault(0),
+            'sortOrder' => Rule::num()->integer()->min(0)->max(100000)->withDefault(0),
         ]);
     }
 
@@ -165,6 +196,8 @@ final class Schemas
             'mrp' => Rule::num()->positive()->optional(),
             'stock' => Rule::num()->integer()->min(0)->withDefault(0),
             'sku' => Rule::str()->min(1)->max(100),
+            // Existing image URLs to keep on this variant (new files are uploaded separately).
+            'images' => Rule::listOf(Rule::str()->max(500)->regex(self::IMAGE_URL))->max(30)->optional(),
         ]);
     }
 
@@ -174,7 +207,7 @@ final class Schemas
             'name' => Rule::str()->min(1)->max(255),
             'slug' => Rule::str()->min(1)->max(255)->regex(self::SLUG),
             'categoryId' => Rule::num()->integer()->positive(),
-            'subcategoryId' => Rule::num()->integer()->positive()->optional(),
+            'subcategoryId' => Rule::num()->integer()->positive()->nullable()->optional(),
             'description' => Rule::str()->optional(),
             'shortDescription' => Rule::str()->max(500)->optional(),
             'sellingUnit' => Rule::oneOf(['piece', 'metre'])->withDefault('piece'),

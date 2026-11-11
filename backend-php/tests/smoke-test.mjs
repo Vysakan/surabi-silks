@@ -14,8 +14,9 @@
  * The admin checks log in as the demo admin from database/seed.sql. If you changed it,
  * set ADMIN_EMAIL and ADMIN_PASSWORD before running (PowerShell: $env:ADMIN_PASSWORD="...").
  *
- * It writes test data: a new customer "Smoke Test", a category and a product (both removed
- * again at the end), an address (deleted), a review, and an order (cancelled again).
+ * It writes test data: a new customer "Smoke Test", a category with a subcategory and a product
+ * (all removed again at the end), an address (deleted), a review, and an order (cancelled again).
+ * It also asks for a password-reset email for the test customer (an @example.com address).
  * Run it against your local or test database, not the live shop.
  */
 
@@ -194,6 +195,13 @@ async function main() {
 
   // ------------------------------------------------------------ 2
   section('2. Catalogue (public pages)');
+  if (ORIGIN) {
+    r = await api('POST', '/cart/items', { headers: { Origin: 'https://evil.example' }, json: { productId: 1, variantId: 1 } });
+    expect('A change requested from another website is refused (403)', r, 403);
+    r = await api('POST', '/cart/items', { headers: { Origin: ORIGIN }, json: { productId: 1, variantId: 1 } });
+    expect('The same request from your website passes that check (then 401: not signed in)', r, 401);
+  }
+
   r = await api('GET', '/categories');
   expect('GET /categories returns a list', r, 200, (b) => Array.isArray(b));
   if (r.status >= 500) {
@@ -257,11 +265,17 @@ async function main() {
   // ------------------------------------------------------------ 3
   section('3. Customer account');
   const email = `smoke-${STAMP}@example.com`;
-  const password = 'SmokeTest123';
+  let password = 'SmokeTest123';
+
+  r = await api('POST', '/auth/register', { json: { name: 'Smoke Test', email, phone: '9876543210', password: 'abcdefghij' } });
+  expect('Register refuses a password without a number', r, 400, () => errCode(r) === 'VALIDATION_ERROR');
+  r = await api('POST', '/auth/register', { json: { name: 'Smoke Test', email, phone: '9876543210', password: 'password123' } });
+  expect('Register refuses a very common password', r, 400, () => errCode(r) === 'VALIDATION_ERROR');
 
   r = await api('POST', '/auth/register', { json: { name: 'Smoke Test', email, phone: '9876543210', password } });
   expect('POST /auth/register creates a customer', r, 201, (b) => b.email === email && b.role === 'customer' && !('password_hash' in b) && !('password' in b));
   check('Register sets the session_id cookie', Boolean(sessionCookie(r)));
+  const registerSession = sessionCookie(r);
   check('The session cookie is HttpOnly', setCookies(r).some((c) => /session_id=/.test(c) && /httponly/i.test(c)));
   const custId = r.json?.id;
 
@@ -284,6 +298,39 @@ async function main() {
   r = await api('GET', '/auth/me', { cookie: 'session_id=not-a-real-session' });
   expect('GET /auth/me with a fake session returns 401', r, 401);
 
+  // Forgot / reset password. The answer must not reveal whether an account exists.
+  r = await api('POST', '/auth/forgot-password', { json: { email } });
+  const forgotKnown = r.json?.message;
+  expect('POST /auth/forgot-password answers 200', r, 200, (b) => typeof b.message === 'string');
+  r = await api('POST', '/auth/forgot-password', { json: { email: `nobody-${STAMP}@example.com` } });
+  expect('Forgot password gives the same answer for an unknown email', r, 200, (b) => b.message === forgotKnown);
+  const fakeToken = 'x'.repeat(43);
+  r = await api('POST', '/auth/reset-password/verify', { json: { token: fakeToken } });
+  expect('A made-up reset link is refused (400 INVALID_TOKEN)', r, 400, () => errCode(r) === 'INVALID_TOKEN');
+  r = await api('POST', '/auth/reset-password', { json: { token: fakeToken, password: 'NewSmoke456' } });
+  expect('Resetting with a made-up link is refused', r, 400, () => errCode(r) === 'INVALID_TOKEN');
+
+  // Change password while signed in
+  if (cust) {
+    r = await api('POST', '/auth/change-password', { cookie: cust, json: { currentPassword: 'not-my-password1', newPassword: 'NewSmoke456' } });
+    expect('Change password with a wrong current password returns 400', r, 400, () => errCode(r) === 'VALIDATION_ERROR');
+    r = await api('POST', '/auth/change-password', { cookie: cust, json: { currentPassword: password, newPassword: 'NewSmoke456' } });
+    expect('POST /auth/change-password', r, 200);
+    if (r.status === 200) {
+      r = await api('GET', '/auth/me', { cookie: cust });
+      expect('The session that changed the password still works', r, 200);
+      if (registerSession) {
+        r = await api('GET', '/auth/me', { cookie: registerSession });
+        expect('Other sessions are signed out after a password change', r, 401);
+      }
+      r = await api('POST', '/auth/login', { json: { email, password } });
+      expect('The old password no longer works', r, 401);
+      password = 'NewSmoke456';
+      r = await api('POST', '/auth/login', { json: { email, password } });
+      expect('The new password works', r, 200);
+    }
+  }
+
   if (!cust || !custId) {
     console.log('\nStopping: the remaining tests need a logged-in customer.');
     return;
@@ -292,12 +339,24 @@ async function main() {
   // ------------------------------------------------------------ 4
   section('4. Admin: categories, products, images');
   r = await api('POST', '/auth/login', { json: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD } });
-  const admin = r.status === 200 && r.json?.role === 'admin' ? sessionCookie(r) : null;
+  const adminRole = r.json?.role;
+  const admin = r.status === 200 && ['admin', 'superadmin'].includes(adminRole) ? sessionCookie(r) : null;
   check(`Admin login (${ADMIN_EMAIL})`, Boolean(admin), `got HTTP ${r.status}: ${short(r.text)}`);
   if (!admin) {
     console.log('        Hint: the demo admin comes from database/seed.sql. If you changed its password, set');
     console.log('        ADMIN_EMAIL and ADMIN_PASSWORD. If the password is right, check that your PHP supports Argon2:');
     console.log('        php -r "var_dump(defined(\'PASSWORD_ARGON2ID\'));"   (should print bool(true))');
+  }
+
+  r = await api('GET', '/admin/users', { cookie: cust });
+  expect('A customer cannot list admin accounts (403)', r, 403);
+  if (admin) {
+    r = await api('GET', '/admin/users', { cookie: admin });
+    if (adminRole === 'superadmin') {
+      expect('The root admin can list admin accounts', r, 200, (b) => Array.isArray(b.items) && b.items.every((u) => !('password_hash' in u)));
+    } else {
+      expect('A normal admin cannot list admin accounts (403, root admin only)', r, 403);
+    }
   }
 
   const fabric = 'Smoke Test Silk';
@@ -328,6 +387,8 @@ async function main() {
   expect('Creating a product as a customer returns 403', r, 403, () => errCode(r) === 'FORBIDDEN');
 
   let catId = null;
+  let subId = null;
+  let subImage = null;
   let product = null; // the product the shopping tests use
   let testProduct = false; // true when this script created it (so it can clean it up)
   let vMain = null;
@@ -335,7 +396,9 @@ async function main() {
 
   if (admin) {
     r = await api('POST', '/categories', { cookie: admin, json: { name: 'Smoke Test Category', slug: catSlug, description: 'Created by the smoke test', sortOrder: 99 } });
-    expect('POST /categories creates a category', r, 201, (b) => b.slug === catSlug && b.sortOrder === 99);
+    expect('Creating a category without an image returns 400', r, 400, () => errCode(r) === 'VALIDATION_ERROR' && r.json?.error?.details?.[0]?.path === 'image');
+    r = await api('POST', '/categories', { cookie: admin, json: { name: 'Smoke Test Category', slug: catSlug, image: '/images/categories/sarees.jpg', description: 'Created by the smoke test', sortOrder: 99 } });
+    expect('POST /categories creates a category', r, 201, (b) => b.slug === catSlug && b.sortOrder === 99 && b.image === '/images/categories/sarees.jpg');
     catId = r.status === 201 ? r.json?.id ?? null : null;
   }
   if (admin && catId) {
@@ -343,10 +406,39 @@ async function main() {
     expect('PUT /categories/:id renames it', r, 200, (b) => b.name === 'Smoke Test Category (edited)' && b.sortOrder === 99);
     r = await api('GET', `/categories/slug/${catSlug}`);
     expect('The new category is found by its slug', r, 200, (b) => b.id === catId);
-    r = await api('POST', '/categories', { cookie: admin, json: { name: 'Bad', slug: 'Not A Slug!' } });
+    r = await api('POST', '/categories', { cookie: admin, json: { name: 'Bad', slug: 'Not A Slug!', image: '/images/categories/sarees.jpg' } });
     expect('A category with an invalid slug returns 400', r, 400);
+    r = await api('PUT', `/categories/${catId}`, { cookie: admin, json: { image: null } });
+    expect('Removing the image of a category returns 400 (image is required)', r, 400, () => errCode(r) === 'VALIDATION_ERROR');
+    r = await api('POST', '/categories', { cookie: admin, json: { name: 'Smoke Test Category', slug: catSlug, image: '/images/categories/sarees.jpg' } });
+    expect('A second category with the same slug returns 409', r, 409);
+
+    // Subcategory with an uploaded image
+    const catForm = new FormData();
+    catForm.append('image', new Blob([PNG_1PX], { type: 'image/png' }), 'smoke-category.png');
+    r = await api('POST', '/categories/images', { cookie: admin, form: catForm });
+    expect('POST /categories/images uploads a category image', r, 201, (b) => /^(https?:\/\/[^/]+)?\/uploads\/[^/]+\.png$/.test(b.url));
+    subImage = r.status === 201 ? r.json.url : null;
+    if (subImage) {
+      r = await api('POST', '/categories', { cookie: admin, json: { name: 'Smoke Test Sub', slug: `${catSlug}-sub`, image: subImage, parentId: catId } });
+      expect('POST /categories creates a subcategory under it', r, 201, (b) => b.parentId === catId && b.image === subImage);
+      subId = r.status === 201 ? r.json?.id ?? null : null;
+    }
+    if (subId) {
+      r = await api('GET', '/categories/tree');
+      expect('The tree lists the subcategory under its category', r, 200, (b) => b.find((c) => c.id === catId)?.subcategories?.some((sc) => sc.id === subId));
+      r = await api('POST', '/categories', { cookie: admin, json: { name: 'Too Deep', slug: `${catSlug}-deep`, image: subImage, parentId: subId } });
+      expect('A subcategory cannot have its own subcategories (400)', r, 400);
+      r = await api('DELETE', `/categories/${catId}`, { cookie: admin });
+      expect('A category with subcategories cannot be deleted (409)', r, 409);
+      r = await api('POST', '/products', { cookie: admin, json: { ...productBody, slug: `${productBody.slug}-x`, categoryId: subId } });
+      expect('A product cannot use a subcategory as its main category (400)', r, 400);
+      r = await api('POST', '/products', { cookie: admin, json: { ...productBody, slug: `${productBody.slug}-y`, categoryId: 1, subcategoryId: subId } });
+      expect('A product subcategory must belong to its category (400)', r, 400);
+    }
 
     productBody.categoryId = catId;
+    if (subId) productBody.subcategoryId = subId;
     r = await api('POST', '/products', { cookie: admin, json: productBody });
     expect('POST /products creates a product with 2 variants', r, 201, (b) => b.slug === productBody.slug && b.variants.length === 2 && b.occasion.includes('Smoke Test') && b.tags.includes('smoke-test'));
     if (r.status === 201 && r.json?.id) {
@@ -364,6 +456,7 @@ async function main() {
 
     const filters = [
       ['category', `categoryId=${catId}`],
+      ...(subId ? [['subcategory', `subcategoryId=${subId}`]] : []),
       ['price range', 'priceMin=1600&priceMax=1600'],
       ['colour', `colors=${encodeURIComponent('Smoke Blue')}`],
       ['fabric', `fabrics=${encodeURIComponent(fabric)}`],
@@ -583,6 +676,30 @@ async function main() {
   if (!admin) {
     skip('Clean-up', 'admin login failed');
   }
+  if (admin && image && testProduct) {
+    // The website sends existing image URLs back when it saves the variants; they must be kept.
+    const variants = productBody.variants.map((v) => ({ ...v, images: v.sku === skuMain ? [image.url] : [] }));
+    r = await api('PUT', `/products/${product.id}`, { cookie: admin, json: { variants } });
+    expect('Saving variants with their image URLs keeps the images', r, 200, (b) => b.variants.find((v) => v.sku === skuMain)?.images?.includes(image.url));
+    r = await request('GET', fullUrl(image.url));
+    check('The image file is still there after the edit', r.status === 200, `got HTTP ${r.status}`);
+    image = null; // the re-attached image has a new id; the next save removes it instead
+    r = await api('PUT', `/products/${product.id}`, { cookie: admin, json: { variants: productBody.variants.map((v) => ({ ...v, images: [] })) } });
+    expect('Saving variants without an image removes it', r, 200, (b) => b.variants.every((v) => v.images.length === 0));
+    vMain = r.json?.variants?.find((v) => v.sku === skuMain)?.id ?? vMain; // variants are re-created on save
+    const removedUrl = variants.find((v) => v.images.length)?.images[0];
+    if (removedUrl) {
+      r = await request('GET', fullUrl(removedUrl));
+      check('The image file nobody uses any more is deleted', !(r.status === 200 && (r.headers.get('content-type') || '').startsWith('image/')), `got HTTP ${r.status}`);
+    }
+    // A fresh image for the DELETE /products/:id/images/:imageId check below.
+    const again = new FormData();
+    again.append('image', new Blob([PNG_1PX], { type: 'image/png' }), 'smoke-2.png');
+    again.append('variantId', String(vMain));
+    r = await api('POST', `/products/${product.id}/images`, { cookie: admin, form: again });
+    expect('POST /products/:id/images uploads a second image', r, 201, (b) => Number.isInteger(b.id));
+    image = r.status === 201 && r.json?.url ? r.json : null;
+  }
   if (admin && image) {
     r = await api('DELETE', `/products/${product.id}/images/${image.id}`, { cookie: admin });
     expect('DELETE /products/:id/images/:imageId', r, 204);
@@ -598,6 +715,14 @@ async function main() {
     expect('An archived product cannot be added to the cart', r, 400, () => errCode(r) === 'PRODUCT_UNAVAILABLE');
     r = await api('POST', '/orders', { cookie: cust, json: { items: [{ productId: product.id, variantId: vMain, quantity: 1 }], shippingAddress, paymentMethod: 'cod' } });
     expect('An archived product cannot be ordered', r, 400, () => errCode(r) === 'PRODUCT_UNAVAILABLE');
+  }
+  if (admin && subId) {
+    r = await api('DELETE', `/categories/${subId}`, { cookie: admin });
+    expect('DELETE /categories/:id removes the subcategory', r, 204);
+    if (subImage) {
+      r = await request('GET', fullUrl(subImage));
+      check('The subcategory image file is deleted', !(r.status === 200 && (r.headers.get('content-type') || '').startsWith('image/')), `got HTTP ${r.status}`);
+    }
   }
   if (admin && catId) {
     r = await api('DELETE', `/categories/${catId}`, { cookie: admin });

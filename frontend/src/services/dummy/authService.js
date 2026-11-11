@@ -32,18 +32,6 @@ export async function register(data) {
   return user;
 }
 
-export async function forgotPassword() {
-  throw new Error('Password recovery is available when connected to the live API.');
-}
-
-export async function resetPassword() {
-  throw new Error('Password recovery is available when connected to the live API.');
-}
-
-export async function changePassword() {
-  throw new Error('Password management is available when connected to the live API.');
-}
-
 export async function logout() {
   await delay(100);
   return true;
@@ -55,4 +43,24 @@ export async function getCurrentUser(userId) {
   if (!customer) return null;
   const { password: _, ...user } = customer;
   return user;
+}
+
+export async function forgotPassword() {
+  await delay();
+  return { message: 'Demo mode: no email is sent. Connect the API (VITE_DATA_PROVIDER=api) to use password reset.' };
+}
+
+export async function verifyResetToken() {
+  await delay();
+  throw new Error('Password reset links need the real backend (VITE_DATA_PROVIDER=api).');
+}
+
+export async function resetPassword() {
+  await delay();
+  throw new Error('Password reset links need the real backend (VITE_DATA_PROVIDER=api).');
+}
+
+export async function changePassword() {
+  await delay();
+  return { message: 'Password updated (demo mode).' };
 }

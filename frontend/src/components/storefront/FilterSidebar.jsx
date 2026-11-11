@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { categories } from '@/data/categories';
+import { useCategoryTree } from '@/hooks/useCategoryTree';
 import { cn } from '@/lib/cn';
 
 const COLORS = [
@@ -37,6 +37,7 @@ function FilterSection({ title, children, defaultOpen = true }) {
 
 export default function FilterSidebar({ filters = {}, onFilterChange, onClear }) {
   const update = (key, value) => onFilterChange?.({ ...filters, [key]: value });
+  const { categories } = useCategoryTree();
 
   return (
     <div className="space-y-0">
@@ -57,7 +58,7 @@ export default function FilterSidebar({ filters = {}, onFilterChange, onClear })
               <input
                 type="radio"
                 name="category"
-                checked={filters.categoryId === cat.id}
+                checked={String(filters.categoryId ?? '') === String(cat.id)}
                 onChange={() => update('categoryId', cat.id)}
                 className="accent-primary-500"
               />

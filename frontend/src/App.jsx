@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { RouterProvider } from 'react-router';
 import { router } from './router';
+import { useAuthStore } from './stores/useAuthStore';
 
 const MIN_DISPLAY_MS = 800;
 const FADE_MS = 300;
@@ -40,10 +41,16 @@ if (!shown) {
   dismissLoader();
 }
 
+let sessionVerified = false;
+
 export default function App() {
   useEffect(() => {
     if (!shown) scheduleDismiss();
     else dismissLoader();
+    if (!sessionVerified) {
+      sessionVerified = true;
+      useAuthStore.getState().verifySession();
+    }
   }, []);
   return <RouterProvider router={router} />;
 }

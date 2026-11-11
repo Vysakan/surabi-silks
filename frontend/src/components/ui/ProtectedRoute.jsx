@@ -1,15 +1,21 @@
-import { Navigate, Outlet } from 'react-router';
+import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { PageLoader } from '@/components/ui/LoadingSpinner';
 
-export default function ProtectedRoute({ role }) {
-  const { isAuthenticated, user } = useAuthStore();
+/** roles: who may open the pages below, e.g. ['admin', 'superadmin']. */
+export default function ProtectedRoute({ roles }) {
+  const { isAuthenticated, user, sessionChecked } = useAuthStore();
+  const location = useLocation();
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  if (!sessionChecked) {
+    return <PageLoader />;
   }
 
-  const hasRole = !role || user?.role === role || (role === 'admin' && user?.role === 'root_admin');
-  if (!hasRole) {
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
+  }
+
+  if (roles && !roles.includes(user?.role)) {
     return <Navigate to="/" replace />;
   }
 

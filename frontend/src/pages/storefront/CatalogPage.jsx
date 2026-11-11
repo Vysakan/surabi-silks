@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router';
 import { SlidersHorizontal, X } from 'lucide-react';
 import * as productService from '@/services/productService';
-import * as categoryService from '@/services/categoryService';
+import { loadCategoryTree } from '@/hooks/useCategoryTree';
 import ProductCard from '@/components/storefront/ProductCard';
 import FilterSidebar from '@/components/storefront/FilterSidebar';
 import Pagination from '@/components/ui/Pagination';
@@ -31,6 +31,9 @@ export default function CatalogPage() {
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState(null);
   const [subcategory, setSubcategory] = useState(null);
+  // Which /shop/:category/:subcategory the category state belongs to (products wait for it).
+  const [resolvedPath, setResolvedPath] = useState(null);
+  const pathKey = `${categorySlug || ''}/${subcategorySlug || ''}`;
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const page = Number(searchParams.get('page')) || 1;
@@ -44,21 +47,32 @@ export default function CatalogPage() {
   if (searchParams.get('occasions')) filters.occasions = searchParams.get('occasions').split(',');
 
   useEffect(() => {
+    let cancelled = false;
     async function resolveCategory() {
-      if (!categorySlug) { setCategory(null); setSubcategory(null); return; }
-      const cats = await categoryService.getAll();
-      const cat = cats.find((c) => c.slug === categorySlug);
-      setCategory(cat || null);
-      if (cat && subcategorySlug) {
-        setSubcategory(cat.subcategories.find((s) => s.slug === subcategorySlug) || null);
-      } else {
-        setSubcategory(null);
+      let cat = null;
+      let sub = null;
+      if (categorySlug) {
+        try {
+          const tree = await loadCategoryTree();
+          cat = tree.find((c) => c.slug === categorySlug) || null;
+          if (cat && subcategorySlug) {
+            sub = (cat.subcategories || []).find((s) => s.slug === subcategorySlug) || null;
+          }
+        } catch {
+          // Category list unavailable: show all products rather than nothing.
+        }
       }
+      if (cancelled) return;
+      setCategory(cat);
+      setSubcategory(sub);
+      setResolvedPath(pathKey);
     }
     resolveCategory();
-  }, [categorySlug, subcategorySlug]);
+    return () => { cancelled = true; };
+  }, [categorySlug, subcategorySlug, pathKey]);
 
   const fetchProducts = useCallback(async () => {
+    if (resolvedPath !== pathKey) return; // wait until the category in the URL is known
     setLoading(true);
     const resolvedFilters = { ...filters };
     if (category) resolvedFilters.categoryId = category.id;
@@ -74,7 +88,7 @@ export default function CatalogPage() {
     setTotal(data.total);
     setTotalPages(data.totalPages);
     setLoading(false);
-  }, [page, sort, category, subcategory, searchParams.toString()]);
+  }, [page, sort, category, subcategory, resolvedPath, pathKey, searchParams.toString()]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -106,8 +120,8 @@ export default function CatalogPage() {
     setSearchParams(sort ? { sort } : {}, { replace: true });
   };
 
-  const breadcrumbs = [{ label: 'Home', to: '/' }];
-  if (category) breadcrumbs.push({ label: category.name, to: `/shop/${category.slug}` });
+  const breadcrumbs = [{ label: 'Home', href: '/' }];
+  if (category) breadcrumbs.push({ label: category.name, href: subcategory ? `/shop/${category.slug}` : undefined });
   if (subcategory) breadcrumbs.push({ label: subcategory.name });
   if (!category) breadcrumbs.push({ label: 'Shop All' });
 

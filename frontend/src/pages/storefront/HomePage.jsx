@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { ArrowRight, Truck, Shield, Repeat, Headphones } from 'lucide-react';
 import * as productService from '@/services/productService';
-import { categories } from '@/data/categories';
 import { banners } from '@/data/banners';
 import ProductCard from '@/components/storefront/ProductCard';
+import CategoryCarousel from '@/components/storefront/CategoryCarousel';
 import Button from '@/components/ui/Button';
 import SmartImage from '@/components/ui/SmartImage';
 import ScrollReveal from '@/components/ui/ScrollReveal';
@@ -136,38 +136,6 @@ function HeroSection() {
   );
 }
 
-function CategoryGrid() {
-  return (
-    <section className="max-w-7xl mx-auto px-4 py-16">
-      <ScrollReveal className="text-center mb-10">
-        <h2 className="text-2xl md:text-3xl font-semibold text-neutral-900">Shop by Category</h2>
-        <p className="text-neutral-500 mt-2">Explore our curated collections</p>
-      </ScrollReveal>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-        {categories.map((cat) => (
-          <Link
-            key={cat.id}
-            to={`/shop/${cat.slug}`}
-            className="group relative aspect-[4/3] rounded-xl overflow-hidden"
-          >
-            <SmartImage
-              src={cat.image}
-              alt={cat.name}
-              containerClassName="absolute inset-0"
-              className="w-full h-full transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-4">
-              <h3 className="text-white font-semibold text-lg">{cat.name}</h3>
-              <p className="text-white/70 text-sm mt-0.5">{cat.subcategories.length} collections</p>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function ProductSection({ title, subtitle, products, loading, viewAllLink }) {
   return (
     <section className="max-w-7xl mx-auto px-4 py-12">
@@ -272,7 +240,7 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
-      <CategoryGrid />
+      <CategoryCarousel />
       <ProductSection
         title="New Arrivals"
         subtitle="Fresh additions to our collection"

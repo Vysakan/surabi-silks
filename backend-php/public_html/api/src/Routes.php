@@ -3,8 +3,8 @@
 namespace App;
 
 use App\Controllers\AddressController;
+use App\Controllers\AdminUserController;
 use App\Controllers\AuthController;
-use App\Controllers\AdminManagementController;
 use App\Controllers\CartController;
 use App\Controllers\CategoryController;
 use App\Controllers\OrderController;
@@ -27,8 +27,9 @@ final class Routes
         $r = new Router();
 
         $auth = [Auth::class, 'authenticate'];
-        $admin = Auth::requireRole('admin', 'root_admin');
-        $rootAdmin = Auth::requireRole('root_admin');
+        // Shop staff: admins and the root admin. Managing staff accounts is for the root admin only.
+        $admin = Auth::requireRole(...Auth::STAFF);
+        $root = Auth::requireRole('superadmin');
         $body = function (Rule $schema) {
             return function (Request $req) use ($schema) {
                 $req->validated = $schema->parse($req->body());
@@ -52,13 +53,18 @@ final class Routes
         // Auth
         $r->post('/auth/register', [$authLimit, $body(S::register())], [AuthController::class, 'register']);
         $r->post('/auth/login', [$authLimit, $body(S::login())], [AuthController::class, 'login']);
-        $r->post('/auth/forgot-password', [$authLimit, $body(S::forgotPassword())], [AuthController::class, 'forgotPassword']);
-        $r->post('/auth/reset-password', [$authLimit, $body(S::resetPassword())], [AuthController::class, 'resetPassword']);
-        $r->put('/auth/password', [$auth, $body(S::changePassword())], [AuthController::class, 'changePassword']);
         $r->post('/auth/logout', [$auth], [AuthController::class, 'logout']);
         $r->get('/auth/me', [$auth], [AuthController::class, 'me']);
-        $r->get('/admin/admins', [$auth, $rootAdmin], [AdminManagementController::class, 'list']);
-        $r->post('/admin/admins', [$auth, $rootAdmin, $body(S::createAdmin())], [AdminManagementController::class, 'create']);
+        $r->post('/auth/forgot-password', [$authLimit, $body(S::forgotPassword())], [AuthController::class, 'forgotPassword']);
+        $r->post('/auth/reset-password/verify', [$authLimit, $body(S::resetToken())], [AuthController::class, 'verifyResetToken']);
+        $r->post('/auth/reset-password', [$authLimit, $body(S::resetPassword())], [AuthController::class, 'resetPassword']);
+        $r->post('/auth/change-password', [$auth, $body(S::changePassword())], [AuthController::class, 'changePassword']);
+
+        // Staff accounts (root admin)
+        $r->get('/admin/users', [$auth, $root, $query(S::adminUserQuery())], [AdminUserController::class, 'getAll']);
+        $r->post('/admin/users', [$auth, $root, $body(S::adminCreateUser())], [AdminUserController::class, 'create']);
+        $r->patch('/admin/users/:id', [$auth, $root, $body(S::adminUpdateUser())], [AdminUserController::class, 'update']);
+        $r->post('/admin/users/:id/send-reset', [$auth, $root], [AdminUserController::class, 'sendReset']);
 
         // Products
         $r->get('/products', [$query(S::productQuery())], [ProductController::class, 'getAll']);
@@ -80,6 +86,7 @@ final class Routes
         $r->get('/categories', [], [CategoryController::class, 'getAll']);
         $r->get('/categories/tree', [], [CategoryController::class, 'getTree']);
         $r->get('/categories/slug/:slug', [], [CategoryController::class, 'getBySlug']);
+        $r->post('/categories/images', [$auth, $admin], [CategoryController::class, 'uploadImage']);
         $r->post('/categories', [$auth, $admin, $body(S::createCategory())], [CategoryController::class, 'create']);
         $r->put('/categories/:id', [$auth, $admin, $body(S::updateCategory())], [CategoryController::class, 'update']);
         $r->delete('/categories/:id', [$auth, $admin], [CategoryController::class, 'remove']);

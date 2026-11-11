@@ -21,6 +21,10 @@ final class App
             if (self::cors($req)) {
                 return; // CORS preflight answered
             }
+            if (preg_match('#^/(auth|admin)(/|$)#', $req->path)) {
+                header('Cache-Control: no-store'); // account data must never be cached
+            }
+            self::checkOrigin($req);
 
             [$max, $window] = Config::get('rate_limit.api', [200, 900]);
             RateLimiter::hit('api', (int) $max, (int) $window, $req->ip());
@@ -62,6 +66,45 @@ final class App
         header('X-Frame-Options: SAMEORIGIN');
         header('X-Permitted-Cross-Domain-Policies: none');
         header('X-XSS-Protection: 0');
+    }
+
+    /**
+     * CSRF defence in depth (the session cookie is already SameSite): a browser request that changes
+     * something must come from the website itself. Requests without an Origin header (curl, the smoke
+     * test, same-origin GETs) are not affected.
+     */
+    private static function checkOrigin(Request $req): void
+    {
+        if (in_array($req->method, ['GET', 'HEAD', 'OPTIONS'], true)) {
+            return;
+        }
+        $origin = $req->header('origin');
+        if ($origin === null || $origin === '') {
+            return;
+        }
+        $allowed = [];
+        foreach ([Config::get('cors.origin', ''), Config::get('app.frontend_url', '')] as $value) {
+            $value = rtrim(trim((string) $value), '/');
+            if ($value !== '') {
+                $allowed[] = strtolower($value);
+            }
+        }
+        if (!$allowed) {
+            return; // website and API on the same address: nothing to compare against
+        }
+        $origin = strtolower(rtrim($origin, '/'));
+        // The API's own address (website and API on one domain). Browsers set Host themselves.
+        $parts = parse_url($origin);
+        $originHost = ($parts['host'] ?? '') . (isset($parts['port']) ? ':' . $parts['port'] : '');
+        if ($originHost !== '' && $originHost === strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''))) {
+            return;
+        }
+        if (!Config::isProd() && preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?$#', $origin)) {
+            return; // on your PC: Vite dev server, vite preview, 127.0.0.1 ...
+        }
+        if (!in_array($origin, $allowed, true)) {
+            throw HttpError::forbidden('Requests from ' . $origin . ' are not allowed');
+        }
     }
 
     /** Returns true when the request was a preflight that has been answered. */

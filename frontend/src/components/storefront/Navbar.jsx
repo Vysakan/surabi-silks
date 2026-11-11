@@ -4,10 +4,14 @@ import { Search, Heart, ShoppingBag, User, Menu, X, ChevronDown } from 'lucide-r
 import { useCartStore } from '@/stores/useCartStore';
 import { useWishlistStore } from '@/stores/useWishlistStore';
 import { useAuthStore } from '@/stores/useAuthStore';
-import * as authService from '@/services/authService';
 import { useUIStore } from '@/stores/useUIStore';
-import { categories } from '@/data/categories';
+import { useCategoryTree } from '@/hooks/useCategoryTree';
+import { useLogout } from '@/hooks/useLogout';
+import { isStaff } from '@/lib/roles';
 import { cn } from '@/lib/cn';
+
+// Main categories shown in the desktop menu bar; the rest are on /categories.
+const MENU_LIMIT = 4;
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -19,6 +23,10 @@ export default function Navbar() {
   const wishlistCount = useWishlistStore((s) => s.items.length);
   const { isAuthenticated, user } = useAuthStore();
   const { isMobileMenuOpen, toggleMobileMenu, isSearchOpen, toggleSearch, openCartDrawer } = useUIStore();
+  const { categories } = useCategoryTree();
+  const logout = useLogout();
+  const menuCategories = categories.slice(0, MENU_LIMIT);
+  const hasMoreCategories = categories.length > MENU_LIMIT;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -61,7 +69,7 @@ export default function Navbar() {
 
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-8 ml-12">
-            {categories.map((cat) => (
+            {menuCategories.map((cat) => (
               <div
                 key={cat.id}
                 className="relative"
@@ -100,6 +108,11 @@ export default function Navbar() {
                 )}
               </div>
             ))}
+            {hasMoreCategories && (
+              <Link to="/categories" className="text-sm text-neutral-600 hover:text-neutral-900 py-5 transition-colors">
+                All Categories
+              </Link>
+            )}
             <Link to="/shop" className="text-sm text-neutral-600 hover:text-neutral-900 py-5 transition-colors">
               Shop All
             </Link>
@@ -154,7 +167,7 @@ export default function Navbar() {
             </button>
 
             <Link
-              to={isAuthenticated ? (user?.role === 'admin' ? '/admin' : '/account') : '/login'}
+              to={isAuthenticated ? (isStaff(user) ? '/admin' : '/account') : '/login'}
               className="p-2 text-neutral-700 hover:text-primary-600 transition-colors"
             >
               <User size={20} />
@@ -208,6 +221,13 @@ export default function Navbar() {
               </div>
             ))}
             <Link
+              to="/categories"
+              onClick={toggleMobileMenu}
+              className="block px-3 py-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 rounded-lg"
+            >
+              All Categories
+            </Link>
+            <Link
               to="/shop"
               onClick={toggleMobileMenu}
               className="block px-3 py-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 rounded-lg"
@@ -238,14 +258,18 @@ export default function Navbar() {
             <div className="border-t border-neutral-100 pt-2 mt-2">
               {isAuthenticated ? (
                 <>
-                  <Link to="/account" onClick={toggleMobileMenu} className="block px-3 py-2.5 text-sm text-neutral-600 hover:bg-neutral-50 rounded-lg">My Account</Link>
-                  <Link to="/account/orders" onClick={toggleMobileMenu} className="block px-3 py-2.5 text-sm text-neutral-600 hover:bg-neutral-50 rounded-lg">My Orders</Link>
+                  {isStaff(user) ? (
+                    <Link to="/admin" onClick={toggleMobileMenu} className="block px-3 py-2.5 text-sm text-neutral-600 hover:bg-neutral-50 rounded-lg">Admin Dashboard</Link>
+                  ) : (
+                    <>
+                      <Link to="/account" onClick={toggleMobileMenu} className="block px-3 py-2.5 text-sm text-neutral-600 hover:bg-neutral-50 rounded-lg">My Account</Link>
+                      <Link to="/account/orders" onClick={toggleMobileMenu} className="block px-3 py-2.5 text-sm text-neutral-600 hover:bg-neutral-50 rounded-lg">My Orders</Link>
+                    </>
+                  )}
                   <button
-                    onClick={async () => {
-                      try { await authService.logout(); } catch { /* Clear local state even if the API is unreachable. */ }
-                      useAuthStore.getState().logout();
+                    onClick={() => {
                       toggleMobileMenu();
-                      navigate('/');
+                      logout('/');
                     }}
                     className="block w-full text-left px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg"
                   >

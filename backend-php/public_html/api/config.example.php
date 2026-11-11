@@ -32,15 +32,6 @@ return [
         'max_age_hours' => 24,
     ],
 
-    // Set a real sender hosted on this account, and the public React reset page URL.
-    // Password reset deliberately sends no links until both settings are configured.
-    'mail' => [
-        'from' => '',
-    ],
-    'app' => [
-        'reset_url' => '',
-    ],
-
     // Only needed when the website and the API are on DIFFERENT domains.
     // Leave '' when both are served from the same Hostinger site (the normal setup).
     // For local development with Vite use 'http://localhost:5173'.
@@ -52,6 +43,35 @@ return [
         'dir'              => __DIR__ . '/../uploads',   // public_html/uploads
         'url_prefix'       => '/uploads',
         'max_file_size_mb' => 5,
+    ],
+
+    // Links in account emails (password reset, admin invites) point here. No slash at the end.
+    // Local development with Vite: 'http://localhost:5173'.
+    'app' => [
+        'name'         => 'Surabhi Silks',
+        'frontend_url' => 'http://localhost:5173',
+    ],
+
+    'auth' => [
+        'reset_link_minutes' => 30,  // "Forgot password" links
+        'invite_link_hours'  => 48,  // new-admin invites and resets sent by the root admin
+    ],
+
+    // How account emails are sent:
+    //   'log'  - not sent; written to api/storage/mail.log (use this on your PC)
+    //   'smtp' - a mailbox from hPanel > Emails (recommended on Hostinger)
+    //   'mail' - PHP mail() (works on Hostinger, but more likely to land in spam)
+    'mail' => [
+        'driver'     => 'log',
+        'from_email' => 'no-reply@example.com',
+        'from_name'  => 'Surabhi Silks',
+        'smtp' => [
+            'host'       => 'smtp.hostinger.com',
+            'port'       => 465,
+            'encryption' => 'ssl',            // 465 = 'ssl', 587 = 'tls'
+            'username'   => 'no-reply@example.com',
+            'password'   => 'CHANGE_ME',
+        ],
     ],
 
     'shipping' => [

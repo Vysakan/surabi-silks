@@ -73,6 +73,16 @@ final class Uploads
         }
     }
 
+    /** Deletes the file only when no category and no product image uses this URL any more. */
+    public static function removeIfUnused(string $url): void
+    {
+        $used = (int) Db::value('SELECT COUNT(*) FROM product_images WHERE url = ?', [$url])
+            + (int) Db::value('SELECT COUNT(*) FROM categories WHERE image = ?', [$url]);
+        if ($used === 0) {
+            self::remove($url);
+        }
+    }
+
     private static function dir(): string
     {
         return rtrim((string) Config::get('upload.dir', dirname(__DIR__, 3) . '/uploads'), '/');

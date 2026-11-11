@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Support\Db;
 use App\Support\Fmt;
+use App\Support\Uploads;
 
 final class ProductRepository
 {
@@ -171,12 +172,37 @@ final class ProductRepository
             Db::run('UPDATE products SET ' . implode(', ', $fields) . ' WHERE id = ?', $values);
         }
 
+        $unused = [];
         if (!empty($d['variants'])) {
             // Same as the Node backend: replace all variants (their images are removed by ON DELETE CASCADE).
+            // The website sends each variant's existing image URLs in "images", so they are re-attached.
+            $sendsImages = false;
+            $kept = [];
+            foreach ($d['variants'] as $v) {
+                if (array_key_exists('images', $v)) {
+                    $sendsImages = true;
+                    foreach ($v['images'] as $url) {
+                        $kept[$url] = true;
+                    }
+                }
+            }
+            $old = $sendsImages
+                ? array_column(Db::all('SELECT url FROM product_images WHERE product_id = ? AND variant_id IS NOT NULL', [$id]), 'url')
+                : [];
+
             Db::run('DELETE FROM product_variants WHERE product_id = ?', [$id]);
             foreach ($d['variants'] as $v) {
                 self::createVariant($id, $v);
             }
+            foreach (array_unique($old) as $url) {
+                if (!isset($kept[$url])) {
+                    $unused[] = $url;
+                }
+            }
+        }
+        // Delete image files nothing uses any more (only files this API uploaded).
+        foreach ($unused as $url) {
+            Uploads::removeIfUnused($url);
         }
         return self::findById($id);
     }
@@ -204,7 +230,7 @@ final class ProductRepository
 
     private static function createVariant(int $productId, array $v): int
     {
-        return Db::insert(
+        $variantId = Db::insert(
             'INSERT INTO product_variants (product_id, sku, color_name, color_hex, size, design, price, mrp, stock)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
@@ -212,6 +238,10 @@ final class ProductRepository
                 $v['price'], Fmt::orNull($v['mrp'] ?? null), $v['stock'] ?? 0,
             ]
         );
+        foreach (array_values($v['images'] ?? []) as $sortOrder => $url) {
+            self::addImage($productId, $variantId, $url, $sortOrder);
+        }
+        return $variantId;
     }
 
     /** Maps product rows and attaches variants + images (two queries for the whole list). */

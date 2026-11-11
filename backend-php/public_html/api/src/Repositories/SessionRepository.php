@@ -23,4 +23,19 @@ final class SessionRepository
     {
         Db::run('DELETE FROM sessions WHERE id = ?', [$sessionId]);
     }
+
+    /** Signs the user out everywhere (optionally keeping one session, e.g. the current one). */
+    public static function removeAllForUser(int $userId, ?string $exceptSessionId = null): void
+    {
+        if ($exceptSessionId !== null) {
+            Db::run('DELETE FROM sessions WHERE user_id = ? AND id <> ?', [$userId, $exceptSessionId]);
+        } else {
+            Db::run('DELETE FROM sessions WHERE user_id = ?', [$userId]);
+        }
+    }
+
+    public static function purgeExpired(): void
+    {
+        Db::run('DELETE FROM sessions WHERE expires_at < NOW()');
+    }
 }

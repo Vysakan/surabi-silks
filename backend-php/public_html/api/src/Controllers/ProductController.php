@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Http\HttpError;
 use App\Http\Request;
+use App\Repositories\CategoryRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\ReviewRepository;
 use App\Support\Uploads;
@@ -82,6 +83,7 @@ final class ProductController
     public static function create(Request $req): array
     {
         $d = $req->validated;
+        self::checkCategories($d['categoryId'], $d['subcategoryId'] ?? null);
         if (ProductRepository::findBySlug($d['slug'])) {
             throw HttpError::conflict('Product slug already exists');
         }
@@ -91,8 +93,47 @@ final class ProductController
     public static function update(Request $req): array
     {
         $id = (int) $req->params['id'];
-        self::mustFind($id);
-        return [200, ProductRepository::update($id, $req->validated)];
+        $existing = self::mustFind($id);
+        $d = $req->validated;
+
+        if (array_key_exists('categoryId', $d) || array_key_exists('subcategoryId', $d)) {
+            $categoryId = array_key_exists('categoryId', $d) ? $d['categoryId'] : $existing['categoryId'];
+            if (array_key_exists('subcategoryId', $d)) {
+                $subcategoryId = $d['subcategoryId'];
+            } else {
+                // Category changed without a subcategory: keep the old one only if it still belongs.
+                $old = $existing['subcategoryId'] ? CategoryRepository::findById($existing['subcategoryId']) : null;
+                $subcategoryId = $old && $old['parentId'] === $categoryId ? $old['id'] : null;
+                $d['subcategoryId'] = $subcategoryId;
+            }
+            self::checkCategories($categoryId, $subcategoryId);
+        }
+        return [200, ProductRepository::update($id, $d)];
+    }
+
+    /** The category must be a main category; the subcategory (optional) must sit under it. */
+    private static function checkCategories(?int $categoryId, ?int $subcategoryId): void
+    {
+        if ($categoryId === null) {
+            throw HttpError::field('categoryId', 'Please choose a category');
+        }
+        $cat = CategoryRepository::findById($categoryId);
+        if (!$cat) {
+            throw HttpError::field('categoryId', 'The selected category does not exist');
+        }
+        if ($cat['parentId'] !== null) {
+            throw HttpError::field('categoryId', 'Choose a main category here, and pick the subcategory in the Subcategory field');
+        }
+        if ($subcategoryId === null) {
+            return;
+        }
+        $sub = CategoryRepository::findById($subcategoryId);
+        if (!$sub) {
+            throw HttpError::field('subcategoryId', 'The selected subcategory does not exist');
+        }
+        if ($sub['parentId'] !== $categoryId) {
+            throw HttpError::field('subcategoryId', 'The selected subcategory does not belong to "' . $cat['name'] . '"');
+        }
     }
 
     /** DELETE archives the product (it stays in past orders). */
@@ -127,7 +168,7 @@ final class ProductController
     {
         $url = ProductRepository::removeImage((int) $req->params['imageId']);
         if ($url !== null) {
-            Uploads::remove($url);
+            Uploads::removeIfUnused($url);
         }
         return [204, null];
     }

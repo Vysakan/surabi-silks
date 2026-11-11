@@ -4,9 +4,11 @@ import { UserPlus } from 'lucide-react';
 import * as authService from '@/services/authService';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useUIStore } from '@/stores/useUIStore';
-import { isValidEmail, isValidPhone, isRequired, isMinLength } from '@/lib/validators';
+import { getErrorMessage, getFieldErrors } from '@/lib/apiError';
+import { isValidEmail, isValidPhone, isMinLength, passwordProblem, PASSWORD_HINT } from '@/lib/validators';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import PasswordInput from '@/components/ui/PasswordInput';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -14,16 +16,18 @@ export default function RegisterPage() {
   const addToast = useUIStore((s) => s.addToast);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [formError, setFormError] = useState('');
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
 
   const update = (field, value) => setForm({ ...form, [field]: value });
 
   const validate = () => {
     const e = {};
-    if (!isRequired(form.name)) e.name = 'Name is required';
-    if (!isValidEmail(form.email)) e.email = 'Enter a valid email';
-    if (!isValidPhone(form.phone)) e.phone = 'Enter a valid 10-digit phone';
-    if (!isMinLength(form.password, 8)) e.password = 'Minimum 8 characters';
+    if (!isMinLength(form.name, 2)) e.name = 'Enter your full name';
+    if (!isValidEmail(form.email.trim())) e.email = 'Enter a valid email';
+    if (!isValidPhone(form.phone)) e.phone = 'Enter a valid 10-digit mobile number';
+    const problem = passwordProblem(form.password, form.email);
+    if (problem) e.password = problem;
     if (form.password !== form.confirm) e.confirm = 'Passwords do not match';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -31,18 +35,24 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setFormError('');
     if (!validate()) return;
     setLoading(true);
     try {
-      const user = await authService.register({ name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(), password: form.password });
-      if (user) {
-        login(user);
-        addToast({ type: 'success', message: 'Account created successfully!' });
-        navigate('/');
-      }
-    } catch (error) {
-      setErrors({ form: error.response?.data?.error?.message || error.message || 'Unable to create account.' });
-    } finally { setLoading(false); }
+      const user = await authService.register({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        password: form.password,
+      });
+      login(user);
+      addToast({ type: 'success', message: 'Account created successfully!' });
+      navigate('/');
+    } catch (err) {
+      setErrors(getFieldErrors(err));
+      setFormError(getErrorMessage(err, 'Could not create the account. Please try again.'));
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,13 +63,35 @@ export default function RegisterPage() {
           <p className="text-neutral-500 mt-1">Join Surabi Silks for an exclusive experience</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {errors.form && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{errors.form}</div>}
-          <Input label="Full Name" value={form.name} onChange={(e) => update('name', e.target.value)} error={errors.name} />
-          <Input label="Email" type="email" value={form.email} onChange={(e) => update('email', e.target.value)} error={errors.email} />
-          <Input label="Phone Number" value={form.phone} onChange={(e) => update('phone', e.target.value)} error={errors.phone} />
-          <Input label="Password" type="password" value={form.password} onChange={(e) => update('password', e.target.value)} error={errors.password} />
-          <Input label="Confirm Password" type="password" value={form.confirm} onChange={(e) => update('confirm', e.target.value)} error={errors.confirm} />
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          {formError && (
+            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg" role="alert">
+              {formError}
+              {/already registered/i.test(formError) && (
+                <> <Link to="/forgot-password" className="underline font-medium">Reset password</Link></>
+              )}
+            </div>
+          )}
+          <Input label="Full Name" autoComplete="name" value={form.name} onChange={(e) => update('name', e.target.value)} error={errors.name} />
+          <Input label="Email" type="email" autoComplete="email" value={form.email} onChange={(e) => update('email', e.target.value)} error={errors.email} />
+          <Input label="Phone Number" type="tel" autoComplete="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} error={errors.phone} />
+          <PasswordInput
+            label="Password"
+            name="new-password"
+            autoComplete="new-password"
+            value={form.password}
+            onChange={(e) => update('password', e.target.value)}
+            error={errors.password}
+            hint={PASSWORD_HINT}
+          />
+          <PasswordInput
+            label="Confirm Password"
+            name="confirm-password"
+            autoComplete="new-password"
+            value={form.confirm}
+            onChange={(e) => update('confirm', e.target.value)}
+            error={errors.confirm}
+          />
           <Button type="submit" isLoading={loading} className="w-full" size="lg">
             <UserPlus size={18} className="mr-2" /> Create Account
           </Button>

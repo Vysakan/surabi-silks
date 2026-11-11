@@ -32,6 +32,16 @@ final class CategoryRepository
         return $cat;
     }
 
+    public static function slugExists(string $slug): bool
+    {
+        return (bool) Db::value('SELECT COUNT(*) FROM categories WHERE slug = ?', [$slug]);
+    }
+
+    public static function countChildren(int $id): int
+    {
+        return (int) Db::value('SELECT COUNT(*) FROM categories WHERE parent_id = ?', [$id]);
+    }
+
     public static function findTree(): array
     {
         $all = self::findAll();

@@ -22,6 +22,12 @@ class HttpError extends \RuntimeException
         return new self(400, 'VALIDATION_ERROR', 'Validation failed', $details);
     }
 
+    /** 400 VALIDATION_ERROR for one field, with a message people can read. */
+    public static function field(string $path, string $message): self
+    {
+        return new self(400, 'VALIDATION_ERROR', $message, [['path' => $path, 'message' => $message]]);
+    }
+
     public static function notFound(string $resource = 'Resource'): self
     {
         return new self(404, 'NOT_FOUND', $resource . ' not found');
