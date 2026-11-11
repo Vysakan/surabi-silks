@@ -89,7 +89,7 @@ export default function LoginPage() {
         </p>
 
         {/* Quick login for demo */}
-        {/* <div className="mt-8 border-t border-neutral-100 pt-6">
+        <div className="mt-8 border-t border-neutral-100 pt-6">
           <p className="text-xs text-neutral-400 text-center mb-3 uppercase tracking-wider">Quick Login (Demo)</p>
           <div className="flex gap-3">
             <Button
@@ -109,7 +109,7 @@ export default function LoginPage() {
               Admin
             </Button>
           </div>
-        </div> */}
+        </div>
       </div>
     </div>
   );
