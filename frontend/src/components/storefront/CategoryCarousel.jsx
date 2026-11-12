@@ -1,85 +1,48 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCategoryTree } from '@/hooks/useCategoryTree';
 import CategoryCard from '@/components/storefront/CategoryCard';
+import SliderArrows, { useSlider } from '@/components/storefront/SliderArrows';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import { Skeleton } from '@/components/ui/Skeleton';
 
-// Card widths: about 1.5 cards on phones, then 2 / 3 / 4 per view (the gaps are subtracted).
-const SLIDE = 'snap-start shrink-0 w-[66%] sm:w-[calc((100%_-_1rem)/2)] md:w-[calc((100%_-_3rem)/3)] lg:w-[calc((100%_-_4.5rem)/4)]';
+// About 2.3 tiles on phones, then 3 / 5 per view (gaps subtracted).
+const SLIDE = 'snap-start shrink-0 w-[42%] sm:w-[calc((100%_-_2rem)/3)] lg:w-[calc((100%_-_6rem)/5)]';
 
-/** "Shop by Category" on the home page: every main category in a swipeable row, plus View All. */
-export default function CategoryCarousel() {
+/** "Shop by collection" on the home page: every main category in a swipeable row, plus View all. */
+export default function CategoryCarousel({ title = 'Shop by collection' }) {
   const { categories, loading } = useCategoryTree();
-  const trackRef = useRef(null);
-  const [canPrev, setCanPrev] = useState(false);
-  const [canNext, setCanNext] = useState(false);
-
-  const updateArrows = useCallback(() => {
-    const el = trackRef.current;
-    if (!el) return;
-    setCanPrev(el.scrollLeft > 4);
-    setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-  }, []);
-
-  useEffect(() => {
-    const el = trackRef.current;
-    if (!el) return undefined;
-    updateArrows();
-    el.addEventListener('scroll', updateArrows, { passive: true });
-    window.addEventListener('resize', updateArrows);
-    return () => {
-      el.removeEventListener('scroll', updateArrows);
-      window.removeEventListener('resize', updateArrows);
-    };
-  }, [updateArrows, categories.length, loading]);
-
-  const scroll = (direction) => {
-    const el = trackRef.current;
-    if (el) el.scrollBy({ left: direction * el.clientWidth * 0.9, behavior: 'smooth' });
-  };
+  const { trackRef, canPrev, canNext, scroll } = useSlider([categories.length, loading]);
 
   if (!loading && categories.length === 0) return null;
 
-  const arrowClass = 'hidden sm:flex w-9 h-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed';
-
   return (
-    <section className="max-w-7xl mx-auto px-4 py-16">
-      <ScrollReveal className="flex items-end justify-between gap-4 mb-8">
-        <div className="min-w-0">
-          <h2 className="text-2xl md:text-3xl font-semibold text-neutral-900">Shop by Category</h2>
-          <p className="text-neutral-500 mt-2">Explore our curated collections</p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <button type="button" onClick={() => scroll(-1)} disabled={!canPrev} className={arrowClass} aria-label="Previous categories">
-            <ChevronLeft size={18} />
-          </button>
-          <button type="button" onClick={() => scroll(1)} disabled={!canNext} className={arrowClass} aria-label="Next categories">
-            <ChevronRight size={18} />
-          </button>
-          <Link to="/categories" className="ml-1 sm:ml-2 text-sm font-medium text-primary-600 hover:text-primary-700 flex items-center gap-1">
-            View All <ArrowRight size={14} />
-          </Link>
-        </div>
-      </ScrollReveal>
+    <section className="py-10 md:py-14">
+      <div className="max-w-7xl mx-auto px-4 lg:px-6">
+        <ScrollReveal className="flex items-end justify-between gap-4 mb-6">
+          <h2 className="sf-heading">{title}</h2>
+          <div className="flex items-center gap-4 shrink-0">
+            <Link to="/categories" className="sf-link">View all</Link>
+            <SliderArrows canPrev={canPrev} canNext={canNext} onScroll={scroll} label="collections" />
+          </div>
+        </ScrollReveal>
 
-      <div
-        ref={trackRef}
-        className="flex gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-1 [&::-webkit-scrollbar]:hidden"
-        style={{ scrollbarWidth: 'none' }}
-      >
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className={SLIDE}>
-              <Skeleton className="aspect-[4/3] rounded-xl" />
-            </div>
-          ))
-          : categories.map((cat) => (
-            <div key={cat.id} className={SLIDE}>
-              <CategoryCard category={cat} />
-            </div>
-          ))}
+        <div
+          ref={trackRef}
+          className="flex gap-3 md:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0 scroll-px-4 lg:scroll-px-0"
+        >
+          {loading
+            ? Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className={SLIDE}>
+                <Skeleton className="aspect-[3/4] rounded-none" />
+                <Skeleton className="h-4 w-2/3 mt-3" />
+              </div>
+            ))
+            : categories.map((cat) => (
+              <div key={cat.id} className={SLIDE}>
+                <CategoryCard category={cat} />
+              </div>
+            ))}
+        </div>
       </div>
     </section>
   );

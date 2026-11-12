@@ -1,60 +1,83 @@
 import { Link } from 'react-router';
-import ScrollReveal from '@/components/ui/ScrollReveal';
+import { Mail, Phone } from 'lucide-react';
+import { useCategoryTree } from '@/hooks/useCategoryTree';
+
+// Shop details shown in the footer: change these to your real ones.
+const CONTACT_EMAIL = 'support@surabsilks.com';
+const CONTACT_PHONE = '+91 98765 43210';
+const FOOTER_CATEGORY_LIMIT = 5;
+
+function Column({ title, children }) {
+  return (
+    <div>
+      <h4 className="text-sm font-medium text-black mb-4">{title}</h4>
+      <ul className="space-y-2.5 text-sm text-neutral-600">{children}</ul>
+    </div>
+  );
+}
+
+function FooterLink({ to, children }) {
+  return (
+    <li>
+      <Link to={to} className="hover:text-black hover:underline underline-offset-4 transition-colors">{children}</Link>
+    </li>
+  );
+}
 
 export default function Footer() {
+  const { categories } = useCategoryTree();
+  const year = new Date().getFullYear();
+
   return (
-    <footer className="bg-neutral-900 text-neutral-400">
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Brand */}
-          <ScrollReveal>
-            <Link to="/" className="inline-block mb-3">
-              <img src="/logo.jpg" alt="Surabi Silks" className="h-10 w-auto brightness-200" />
+    <footer className="bg-[var(--color-surface)] border-t border-neutral-200">
+      <div className="max-w-7xl mx-auto px-4 lg:px-6 pt-14 pb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr] gap-x-6 gap-y-10">
+          <div className="col-span-2 lg:col-span-1 max-w-sm">
+            <Link to="/" className="inline-block mb-4" aria-label="Surabhi Silks home">
+              <img src="/logo.jpg" alt="Surabhi Silks" className="h-12 w-auto" />
             </Link>
-            <p className="text-sm leading-relaxed">
-              Curating the finest handloom textiles from across India. Authentic silks, cottons, and fabrics delivered to your doorstep.
+            <p className="text-sm text-neutral-600 leading-relaxed">
+              The finest handloom textiles from across India: authentic silks, cottons and fabrics, delivered to your doorstep.
             </p>
-          </ScrollReveal>
-
-          {/* Shop */}
-          <div>
-            <h4 className="text-white text-sm font-semibold mb-3 uppercase tracking-wider">Shop</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link to="/shop/sarees" className="hover:text-white transition-colors">Sarees</Link></li>
-              <li><Link to="/shop/fabrics" className="hover:text-white transition-colors">Fabrics</Link></li>
-              <li><Link to="/shop/dress-materials" className="hover:text-white transition-colors">Dress Materials</Link></li>
-              <li><Link to="/shop/accessories" className="hover:text-white transition-colors">Accessories</Link></li>
-              <li><Link to="/shop" className="hover:text-white transition-colors">Shop All</Link></li>
-            </ul>
           </div>
 
-          {/* Account */}
-          <div>
-            <h4 className="text-white text-sm font-semibold mb-3 uppercase tracking-wider">Account</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link to="/login" className="hover:text-white transition-colors">Sign In</Link></li>
-              <li><Link to="/register" className="hover:text-white transition-colors">Register</Link></li>
-              <li><Link to="/account/orders" className="hover:text-white transition-colors">Order History</Link></li>
-              <li><Link to="/wishlist" className="hover:text-white transition-colors">Wishlist</Link></li>
-              <li><Link to="/cart" className="hover:text-white transition-colors">Cart</Link></li>
-            </ul>
-          </div>
+          <Column title="Shop">
+            {categories.slice(0, FOOTER_CATEGORY_LIMIT).map((cat) => (
+              <FooterLink key={cat.id} to={`/shop/${cat.slug}`}>{cat.name}</FooterLink>
+            ))}
+            <FooterLink to="/shop?sort=newest">New arrivals</FooterLink>
+            <FooterLink to="/shop">Shop all</FooterLink>
+          </Column>
 
-          {/* Company */}
-          <div>
-            <h4 className="text-white text-sm font-semibold mb-3 uppercase tracking-wider">Company</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link to="/about-us" className="hover:text-white transition-colors">About Us</Link></li>
-              <li><Link to="/contact-us" className="hover:text-white transition-colors">Contact Us</Link></li>
-              <li><Link to="/blog" className="hover:text-white transition-colors">Blog</Link></li>
-              <li>support@surabsilks.com</li>
-              <li>+91 98765 43210</li>
-            </ul>
-          </div>
+          <Column title="Help">
+            <FooterLink to="/contact-us">Contact us</FooterLink>
+            <FooterLink to="/about-us">About us</FooterLink>
+            <FooterLink to="/blog">Blog</FooterLink>
+            <FooterLink to="/account/orders">Track your order</FooterLink>
+            <FooterLink to="/wishlist">Wishlist</FooterLink>
+          </Column>
+
+          <Column title="Get in touch">
+            <li>
+              <a href={`mailto:${CONTACT_EMAIL}`} className="inline-flex items-center gap-2 hover:text-black">
+                <Mail size={15} strokeWidth={1.6} /> {CONTACT_EMAIL}
+              </a>
+            </li>
+            <li>
+              <a href={`tel:${CONTACT_PHONE.replace(/\s+/g, '')}`} className="inline-flex items-center gap-2 hover:text-black">
+                <Phone size={15} strokeWidth={1.6} /> {CONTACT_PHONE}
+              </a>
+            </li>
+            <li className="text-neutral-500">Mon–Sat, 10am–7pm IST</li>
+          </Column>
         </div>
 
-        <div className="border-t border-neutral-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <p>&copy; {new Date().getFullYear()} Surabi Silks. All rights reserved.</p>
+        <div className="mt-12 pt-6 border-t border-neutral-300/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-neutral-500">
+          <p>&copy; {year} Surabhi Silks. All rights reserved.</p>
+          <div className="flex items-center gap-5">
+            <Link to="/login" className="hover:text-black">Sign in</Link>
+            <Link to="/register" className="hover:text-black">Create account</Link>
+          </div>
         </div>
       </div>
     </footer>

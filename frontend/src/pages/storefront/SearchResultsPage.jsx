@@ -5,8 +5,8 @@ import * as productService from '@/services/productService';
 import ProductCard from '@/components/storefront/ProductCard';
 import EmptyState from '@/components/ui/EmptyState';
 import { SkeletonProductCard } from '@/components/ui/Skeleton';
-import Breadcrumbs from '@/components/ui/Breadcrumbs';
-import ScrollReveal from '@/components/ui/ScrollReveal';
+
+const GRID = 'grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-3 md:gap-x-6 gap-y-8 md:gap-y-12';
 
 export default function SearchResultsPage() {
   const [searchParams] = useSearchParams();
@@ -15,46 +15,50 @@ export default function SearchResultsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     async function doSearch() {
       if (!query.trim()) { setResults([]); setLoading(false); return; }
       setLoading(true);
-      const data = await productService.search(query);
-      setResults(data.items);
-      setLoading(false);
+      try {
+        const data = await productService.search(query);
+        if (!cancelled) setResults(data.items || []);
+      } catch {
+        if (!cancelled) setResults([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
     doSearch();
+    return () => { cancelled = true; };
   }, [query]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: `Search: "${query}"` }]} />
-
-      <ScrollReveal as="h1" className="text-2xl md:text-3xl font-semibold text-neutral-900 mt-4 mb-2">
-        Search Results
-      </ScrollReveal>
+    <div className="max-w-7xl mx-auto px-4 lg:px-6 pt-8 md:pt-12 pb-16">
+      <p className="sf-eyebrow">Search results</p>
+      <h1 className="text-3xl md:text-5xl font-semibold tracking-tight text-black mt-1">&ldquo;{query}&rdquo;</h1>
       {!loading && (
-        <p className="text-neutral-500 mb-8">
-          {results.length} result{results.length !== 1 ? 's' : ''} for &ldquo;{query}&rdquo;
+        <p className="text-sm text-neutral-500 mt-3">
+          {results.length} {results.length === 1 ? 'item' : 'items'}
         </p>
       )}
 
-      {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {Array.from({ length: 8 }).map((_, i) => <SkeletonProductCard key={i} />)}
-        </div>
-      ) : results.length === 0 ? (
-        <EmptyState
-          icon={Search}
-          title="No results found"
-          description={`We couldn't find anything for "${query}". Try different keywords or browse our collections.`}
-          actionLabel="Browse Shop"
-          actionLink="/shop"
-        />
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {results.map((p) => <ProductCard key={p.id} product={p} />)}
-        </div>
-      )}
+      <div className="mt-8 border-t border-neutral-200 pt-8">
+        {loading ? (
+          <div className={GRID}>
+            {Array.from({ length: 8 }).map((_, i) => <SkeletonProductCard key={i} />)}
+          </div>
+        ) : results.length === 0 ? (
+          <EmptyState
+            icon={Search}
+            title="No results found"
+            description={`We couldn't find anything for "${query}". Try different keywords or browse our collections.`}
+          />
+        ) : (
+          <div className={GRID}>
+            {results.map((p) => <ProductCard key={p.id} product={p} />)}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

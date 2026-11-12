@@ -63,6 +63,9 @@ body {
   .smart-image-wrap {
     position: relative;
     overflow: hidden;
+    /* Keeps the image's z-index inside the wrapper, so badges, buttons and
+       text placed over an image are not hidden behind it. */
+    isolation: isolate;
   }
 
   .smart-image-skeleton {
@@ -185,5 +188,102 @@ body {
   }
   .branded-spinner {
     animation-duration: 1.5s;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Storefront look (customer-facing pages only).
+   A clean black-and-white style: inside .storefront every "primary"
+   colour becomes black/grey, product images are square-cornered and
+   headings use the sans-serif font. The admin dashboard is untouched.
+   ------------------------------------------------------------------ */
+.storefront {
+  --color-primary-50: #f4f4f4;
+  --color-primary-100: #ececec;
+  --color-primary-200: #d9d9d9;
+  --color-primary-300: #a3a3a3;
+  --color-primary-400: #525252;
+  --color-primary-500: #121212;
+  --color-primary-600: #000000;
+  --color-primary-700: #000000;
+  --color-primary-800: #000000;
+  --color-primary-900: #000000;
+
+  --color-sale: #b42318;
+  --color-surface: #f6f5f3;
+
+  --font-heading: var(--font-sans);
+  --radius-card: 0;
+  --radius-button: 0.375rem;
+  --radius-input: 0.375rem;
+
+  color: #121212;
+}
+
+.storefront h1,
+.storefront h2,
+.storefront h3 {
+  letter-spacing: -0.015em;
+}
+
+/* Section heading used across the home page and listings. */
+.sf-heading {
+  font-size: clamp(1.375rem, 1.1rem + 1vw, 2rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #121212;
+}
+
+.sf-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6b6b6b;
+}
+
+/* Underlined text link ("View all"). */
+.sf-link {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #121212;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  white-space: nowrap;
+}
+.sf-link:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Drawers and overlays */
+@keyframes sf-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sf-slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes sf-slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes sf-slide-down {
+  from { transform: translateY(-12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.sf-fade-in { animation: sf-fade-in 200ms ease-out both; }
+.sf-slide-in-right { animation: sf-slide-in-right 280ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.sf-slide-in-left { animation: sf-slide-in-left 280ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.sf-slide-down { animation: sf-slide-down 220ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-fade-in,
+  .sf-slide-in-right,
+  .sf-slide-in-left,
+  .sf-slide-down {
+    animation: none;
   }
 }

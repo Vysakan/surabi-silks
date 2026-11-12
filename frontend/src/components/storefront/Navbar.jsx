@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router';
-import { Search, Heart, ShoppingBag, User, Menu, X, ChevronDown } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, NavLink, useLocation } from 'react-router';
+import { Search, Heart, ShoppingBag, User, Menu, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { useCartStore } from '@/stores/useCartStore';
 import { useWishlistStore } from '@/stores/useWishlistStore';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -9,280 +9,308 @@ import { useCategoryTree } from '@/hooks/useCategoryTree';
 import { useLogout } from '@/hooks/useLogout';
 import { isStaff } from '@/lib/roles';
 import { cn } from '@/lib/cn';
+import SearchOverlay from '@/components/storefront/SearchOverlay';
 
-// Main categories shown in the desktop menu bar; the rest are on /categories.
-const MENU_LIMIT = 4;
+// Main categories shown as columns in the "Shop" menu; the rest are on /categories.
+const MEGA_MENU_LIMIT = 5;
 
-export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [activeMenu, setActiveMenu] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const navigate = useNavigate();
+const PAGE_LINKS = [
+  { to: '/categories', label: 'Collections' },
+  { to: '/about-us', label: 'About' },
+  { to: '/contact-us', label: 'Contact' },
+];
 
-  const totalItems = useCartStore((s) => s.getTotalItems());
-  const wishlistCount = useWishlistStore((s) => s.items.length);
+const navLinkClass = ({ isActive }) =>
+  cn(
+    'relative py-2 text-[0.9rem] text-neutral-700 hover:text-black transition-colors',
+    'after:absolute after:left-0 after:-bottom-0.5 after:h-px after:bg-black after:transition-all',
+    isActive ? 'text-black after:w-full' : 'after:w-0 hover:after:w-full'
+  );
+
+function IconButton({ children, label, className, ...props }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      className={cn('relative p-2 text-neutral-900 hover:opacity-60 transition-opacity cursor-pointer', className)}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
+function CountBubble({ count }) {
+  if (!count) return null;
+  return (
+    <span className="absolute top-0.5 right-0 min-w-4 h-4 px-1 bg-black text-white text-[10px] leading-4 font-medium rounded-full text-center">
+      {count > 99 ? '99+' : count}
+    </span>
+  );
+}
+
+function MegaMenu({ categories, onNavigate }) {
+  const shown = categories.slice(0, MEGA_MENU_LIMIT);
+  return (
+    <div className="absolute left-0 right-0 top-full bg-white border-t border-neutral-200 shadow-[0_12px_24px_-12px_rgba(0,0,0,0.15)] sf-slide-down">
+      <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-8">
+        {shown.map((cat) => (
+          <div key={cat.id} className="min-w-0">
+            <Link
+              to={`/shop/${cat.slug}`}
+              onClick={onNavigate}
+              className="block text-sm font-semibold text-black mb-3 hover:underline underline-offset-4"
+            >
+              {cat.name}
+            </Link>
+            <ul className="space-y-2">
+              {cat.subcategories.map((sub) => (
+                <li key={sub.id}>
+                  <Link
+                    to={`/shop/${cat.slug}/${sub.slug}`}
+                    onClick={onNavigate}
+                    className="text-sm text-neutral-600 hover:text-black transition-colors"
+                  >
+                    {sub.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+        <div className="min-w-0 flex flex-col items-start gap-3">
+          <Link to="/shop" onClick={onNavigate} className="sf-link">Shop all products</Link>
+          <Link to="/shop?sort=newest" onClick={onNavigate} className="sf-link">New arrivals</Link>
+          <Link to="/categories" onClick={onNavigate} className="sf-link">All collections</Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileMenu({ categories, onClose }) {
+  const [openId, setOpenId] = useState(null);
   const { isAuthenticated, user } = useAuthStore();
-  const { isMobileMenuOpen, toggleMobileMenu, isSearchOpen, toggleSearch, openCartDrawer } = useUIStore();
-  const { categories } = useCategoryTree();
   const logout = useLogout();
-  const menuCategories = categories.slice(0, MENU_LIMIT);
-  const hasMoreCategories = categories.length > MENU_LIMIT;
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery('');
-      if (isSearchOpen) toggleSearch();
-    }
-  };
+  const row = 'flex items-center justify-between w-full py-3.5 text-base text-black border-b border-neutral-100';
 
   return (
-    <header
-      className={cn(
-        'sticky top-0 z-40 bg-white transition-shadow duration-200',
-        scrolled && 'shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
-      )}
-    >
-      {/* Top announcement bar */}
-      <div className="bg-neutral-900 text-white text-[10px] sm:text-xs text-center py-1.5 px-4 truncate">
-        Free shipping on orders above ₹2,000 | Authentic Handloom Collection
-      </div>
+    <div className="fixed inset-0 z-50 lg:hidden">
+      <div className="absolute inset-0 bg-black/40 sf-fade-in" onClick={onClose} />
+      <div className="absolute left-0 top-0 h-full w-[85%] max-w-sm bg-white flex flex-col sf-slide-in-left">
+        <div className="flex items-center justify-between px-5 h-16 border-b border-neutral-200">
+          <span className="text-sm font-medium tracking-wide uppercase">Menu</span>
+          <IconButton label="Close menu" onClick={onClose} className="-mr-2"><X size={22} /></IconButton>
+        </div>
 
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Left: hamburger + logo */}
-          <div className="flex items-center gap-1">
-            <button onClick={toggleMobileMenu} className="lg:hidden p-2 -ml-2 text-neutral-700">
-              {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
-            <Link to="/" className="flex items-center">
-              <img src="/logo.jpg" alt="Surabi Silks" className="h-10 w-auto" />
-            </Link>
-          </div>
-
-          {/* Desktop nav */}
-          <nav className="hidden lg:flex items-center gap-8 ml-12">
-            {menuCategories.map((cat) => (
-              <div
-                key={cat.id}
-                className="relative"
-                onMouseEnter={() => setActiveMenu(cat.id)}
-                onMouseLeave={() => setActiveMenu(null)}
-              >
-                <Link
-                  to={`/shop/${cat.slug}`}
-                  className="flex items-center gap-1 text-sm text-neutral-600 hover:text-neutral-900 py-5 transition-colors"
-                >
-                  {cat.name}
-                  <ChevronDown size={14} className={cn('transition-transform', activeMenu === cat.id && 'rotate-180')} />
-                </Link>
-
-                {/* Mega menu dropdown */}
-                {activeMenu === cat.id && cat.subcategories.length > 0 && (
-                  <div className="absolute top-full left-0 bg-white border border-neutral-100 rounded-xl shadow-xl p-4 min-w-[220px] animate-in fade-in slide-in-from-top-2 duration-150">
+        <nav className="flex-1 overflow-y-auto px-5">
+          <Link to="/" onClick={onClose} className={row}>Home</Link>
+          <Link to="/shop" onClick={onClose} className={row}>Shop all</Link>
+          {categories.map((cat) => {
+            const hasSubs = cat.subcategories.length > 0;
+            const open = openId === cat.id;
+            return (
+              <div key={cat.id} className="border-b border-neutral-100">
+                <div className="flex items-center">
+                  <Link to={`/shop/${cat.slug}`} onClick={onClose} className="flex-1 py-3.5 text-base text-black">
+                    {cat.name}
+                  </Link>
+                  {hasSubs && (
+                    <button
+                      type="button"
+                      onClick={() => setOpenId(open ? null : cat.id)}
+                      className="p-2 -mr-2 text-neutral-500"
+                      aria-label={`${open ? 'Hide' : 'Show'} ${cat.name} collections`}
+                      aria-expanded={open}
+                    >
+                      <ChevronDown size={18} className={cn('transition-transform', open && 'rotate-180')} />
+                    </button>
+                  )}
+                </div>
+                {hasSubs && open && (
+                  <div className="pb-3 pl-3 space-y-0.5">
                     {cat.subcategories.map((sub) => (
                       <Link
                         key={sub.id}
                         to={`/shop/${cat.slug}/${sub.slug}`}
-                        className="block px-3 py-2 text-sm text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                        onClick={onClose}
+                        className="block py-2 text-sm text-neutral-600"
                       >
                         {sub.name}
                       </Link>
                     ))}
-                    <div className="border-t border-neutral-100 mt-2 pt-2">
-                      <Link
-                        to={`/shop/${cat.slug}`}
-                        className="block px-3 py-2 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-lg"
-                      >
-                        View All {cat.name}
-                      </Link>
-                    </div>
                   </div>
                 )}
               </div>
-            ))}
-            {/* {hasMoreCategories && (
-              <Link to="/categories" className="text-sm text-neutral-600 hover:text-neutral-900 py-5 transition-colors">
-                All Categories
-              </Link>
-            )} */}
-            <Link to="/shop" className="text-sm text-neutral-600 hover:text-neutral-900 py-5 transition-colors">
-              Shop All
+            );
+          })}
+          {PAGE_LINKS.map((l) => (
+            <Link key={l.to} to={l.to} onClick={onClose} className={row}>
+              {l.label} <ChevronRight size={16} className="text-neutral-400" />
             </Link>
-            <Link to="/blog" className="text-sm text-neutral-600 hover:text-neutral-900 py-5 transition-colors">
-              Blog
-            </Link>
-            <Link to="/about-us" className="text-sm text-neutral-600 hover:text-neutral-900 py-5 transition-colors">
-              About
-            </Link>
-            <Link to="/contact-us" className="text-sm text-neutral-600 hover:text-neutral-900 py-5 transition-colors">
-              Contact
-            </Link>
-          </nav>
+          ))}
+          <Link to="/blog" onClick={onClose} className={row}>
+            Blog <ChevronRight size={16} className="text-neutral-400" />
+          </Link>
+          <Link to="/wishlist" onClick={onClose} className={row}>
+            Wishlist <Heart size={16} className="text-neutral-400" />
+          </Link>
+        </nav>
 
-          {/* Right actions */}
-          <div className="flex items-center gap-1">
-            {/* Desktop search */}
-            <div className="hidden md:block mr-2">
-              <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-48 lg:w-56 pl-9 pr-3 py-2 text-sm bg-neutral-50 border border-neutral-200 rounded-full placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 focus:bg-white transition-all focus:w-64"
-                />
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-              </form>
-            </div>
-
-            {/* Mobile search toggle */}
-            <button onClick={toggleSearch} className="md:hidden p-2 text-neutral-700">
-              <Search size={20} />
-            </button>
-
-            <Link to="/wishlist" className="p-2 text-neutral-700 hover:text-primary-600 relative transition-colors">
-              <Heart size={20} />
-              {wishlistCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-primary-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center">
-                  {wishlistCount}
-                </span>
+        <div className="px-5 py-4 border-t border-neutral-200 bg-[var(--color-surface)]">
+          {isAuthenticated ? (
+            <>
+              {isStaff(user) ? (
+                <Link to="/admin" onClick={onClose} className="block py-2 text-sm">Admin dashboard</Link>
+              ) : (
+                <>
+                  <Link to="/account" onClick={onClose} className="block py-2 text-sm">My account</Link>
+                  <Link to="/account/orders" onClick={onClose} className="block py-2 text-sm">My orders</Link>
+                </>
               )}
+              <button
+                type="button"
+                onClick={() => { onClose(); logout('/'); }}
+                className="block py-2 text-sm text-neutral-500"
+              >
+                Log out
+              </button>
+            </>
+          ) : (
+            <Link to="/login" onClick={onClose} className="flex items-center gap-2 py-2 text-sm">
+              <User size={18} /> Log in / Create account
             </Link>
-
-            <button onClick={openCartDrawer} className="p-2 text-neutral-700 hover:text-primary-600 relative transition-colors">
-              <ShoppingBag size={20} />
-              {totalItems > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-primary-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center">
-                  {totalItems}
-                </span>
-              )}
-            </button>
-
-            <Link
-              to={isAuthenticated ? (isStaff(user) ? '/admin' : '/account') : '/login'}
-              className="p-2 text-neutral-700 hover:text-primary-600 transition-colors"
-            >
-              <User size={20} />
-            </Link>
-          </div>
+          )}
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Mobile search bar */}
-      {isSearchOpen && (
-        <div className="md:hidden border-t border-neutral-100 px-4 py-3">
-          <form onSubmit={handleSearch} className="relative">
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              autoFocus
-              className="w-full pl-10 pr-4 py-2.5 text-sm bg-neutral-50 border border-neutral-200 rounded-full placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-400/30"
-            />
-            <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
-          </form>
-        </div>
-      )}
+export default function Navbar() {
+  const [megaOpen, setMegaOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const { pathname } = useLocation();
 
-      {/* Mobile menu */}
-      {isMobileMenuOpen && (
-        <div className="lg:hidden border-t border-neutral-100 bg-white max-h-[70vh] overflow-y-auto">
-          <nav className="px-4 py-3 space-y-1">
-            {categories.map((cat) => (
-              <div key={cat.id}>
-                <Link
-                  to={`/shop/${cat.slug}`}
-                  onClick={toggleMobileMenu}
-                  className="block px-3 py-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 rounded-lg"
-                >
-                  {cat.name}
-                </Link>
-                <div className="pl-6 space-y-0.5">
-                  {cat.subcategories.map((sub) => (
-                    <Link
-                      key={sub.id}
-                      to={`/shop/${cat.slug}/${sub.slug}`}
-                      onClick={toggleMobileMenu}
-                      className="block px-3 py-2 text-sm text-neutral-500 hover:text-primary-600 rounded-lg"
-                    >
-                      {sub.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-            <Link
-              to="/categories"
-              onClick={toggleMobileMenu}
-              className="block px-3 py-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 rounded-lg"
-            >
-              All Categories
-            </Link>
-            <Link
-              to="/shop"
-              onClick={toggleMobileMenu}
-              className="block px-3 py-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 rounded-lg"
-            >
-              Shop All
-            </Link>
-            <Link
-              to="/blog"
-              onClick={toggleMobileMenu}
-              className="block px-3 py-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 rounded-lg"
-            >
-              Blog
-            </Link>
-            <Link
-              to="/about-us"
-              onClick={toggleMobileMenu}
-              className="block px-3 py-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 rounded-lg"
-            >
-              About Us
-            </Link>
-            <Link
-              to="/contact-us"
-              onClick={toggleMobileMenu}
-              className="block px-3 py-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50 rounded-lg"
-            >
-              Contact Us
-            </Link>
-            <div className="border-t border-neutral-100 pt-2 mt-2">
-              {isAuthenticated ? (
-                <>
-                  {isStaff(user) ? (
-                    <Link to="/admin" onClick={toggleMobileMenu} className="block px-3 py-2.5 text-sm text-neutral-600 hover:bg-neutral-50 rounded-lg">Admin Dashboard</Link>
-                  ) : (
-                    <>
-                      <Link to="/account" onClick={toggleMobileMenu} className="block px-3 py-2.5 text-sm text-neutral-600 hover:bg-neutral-50 rounded-lg">My Account</Link>
-                      <Link to="/account/orders" onClick={toggleMobileMenu} className="block px-3 py-2.5 text-sm text-neutral-600 hover:bg-neutral-50 rounded-lg">My Orders</Link>
-                    </>
-                  )}
-                  <button
-                    onClick={() => {
-                      toggleMobileMenu();
-                      logout('/');
-                    }}
-                    className="block w-full text-left px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <Link to="/login" onClick={toggleMobileMenu} className="block px-3 py-2.5 text-sm text-primary-600 font-medium hover:bg-primary-50 rounded-lg">Login / Register</Link>
-              )}
+  const totalItems = useCartStore((s) => s.getTotalItems());
+  const wishlistCount = useWishlistStore((s) => s.items.length);
+  const { isAuthenticated, user } = useAuthStore();
+  const isMobileMenuOpen = useUIStore((s) => s.isMobileMenuOpen);
+  const isSearchOpen = useUIStore((s) => s.isSearchOpen);
+  const toggleMobileMenu = useUIStore((s) => s.toggleMobileMenu);
+  const closeMobileMenu = useUIStore((s) => s.closeMobileMenu);
+  const openSearch = useUIStore((s) => s.openSearch);
+  const closeSearch = useUIStore((s) => s.closeSearch);
+  const openCartDrawer = useUIStore((s) => s.openCartDrawer);
+  const { categories } = useCategoryTree();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Close menus when the page changes.
+  useEffect(() => {
+    setMegaOpen(false);
+    closeMobileMenu();
+    closeSearch();
+  }, [pathname, closeMobileMenu, closeSearch]);
+
+  // No page scrolling behind the mobile menu.
+  useEffect(() => {
+    if (!isMobileMenuOpen) return undefined;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previous; };
+  }, [isMobileMenuOpen]);
+
+  const accountLink = isAuthenticated ? (isStaff(user) ? '/admin' : '/account') : '/login';
+
+  return (
+    <>
+      {/* Announcement bar */}
+      <div className="bg-[#121212] text-white text-[11px] sm:text-xs tracking-wide text-center py-2 px-4 truncate">
+        Free shipping on orders above ₹2,000 &nbsp;·&nbsp; Authentic handloom collection
+      </div>
+
+      <header
+        className={cn(
+          'sticky top-0 z-40 bg-white border-b transition-colors',
+          scrolled ? 'border-neutral-200' : 'border-transparent'
+        )}
+        onMouseLeave={() => setMegaOpen(false)}
+      >
+        <div className="max-w-7xl mx-auto px-4 lg:px-6">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center h-16 lg:h-[4.5rem]">
+            {/* Left: mobile menu + search / desktop logo */}
+            <div className="flex items-center">
+              <IconButton label="Open menu" onClick={toggleMobileMenu} className="lg:hidden -ml-2">
+                <Menu size={22} strokeWidth={1.6} />
+              </IconButton>
+              <IconButton label="Search" onClick={openSearch} className="lg:hidden">
+                <Search size={20} strokeWidth={1.6} />
+              </IconButton>
+              <Link to="/" className="hidden lg:flex items-center" aria-label="Surabhi Silks home">
+                <img src="/logo.jpg" alt="Surabhi Silks" className="h-11 w-auto" />
+              </Link>
             </div>
-          </nav>
+
+            {/* Centre: mobile logo / desktop menu */}
+            <div className="flex justify-center">
+              <Link to="/" className="lg:hidden flex items-center" aria-label="Surabhi Silks home">
+                <img src="/logo.jpg" alt="Surabhi Silks" className="h-10 w-auto" />
+              </Link>
+              <nav className="hidden lg:flex items-center gap-8">
+                <NavLink to="/" end className={navLinkClass} onMouseEnter={() => setMegaOpen(false)}>Home</NavLink>
+                <div onMouseEnter={() => setMegaOpen(true)} className="flex items-center">
+                  <NavLink
+                    to="/shop"
+                    className={(state) => cn(navLinkClass(state), 'flex items-center gap-1')}
+                    onFocus={() => setMegaOpen(true)}
+                  >
+                    Shop
+                    <ChevronDown size={14} className={cn('transition-transform', megaOpen && 'rotate-180')} />
+                  </NavLink>
+                </div>
+                {PAGE_LINKS.map((l) => (
+                  <NavLink key={l.to} to={l.to} className={navLinkClass} onMouseEnter={() => setMegaOpen(false)}>
+                    {l.label}
+                  </NavLink>
+                ))}
+              </nav>
+            </div>
+
+            {/* Right: icons */}
+            <div className="flex items-center justify-end gap-0.5 sm:gap-1">
+              <IconButton label="Search" onClick={openSearch} className="hidden lg:block">
+                <Search size={20} strokeWidth={1.6} />
+              </IconButton>
+              <Link to={accountLink} aria-label="Account" className="p-2 text-neutral-900 hover:opacity-60 transition-opacity">
+                <User size={20} strokeWidth={1.6} />
+              </Link>
+              <Link to="/wishlist" aria-label="Wishlist" className="relative p-2 text-neutral-900 hover:opacity-60 transition-opacity hidden sm:block">
+                <Heart size={20} strokeWidth={1.6} />
+                <CountBubble count={wishlistCount} />
+              </Link>
+              <IconButton label="Cart" onClick={openCartDrawer} className="-mr-2">
+                <ShoppingBag size={20} strokeWidth={1.6} />
+                <CountBubble count={totalItems} />
+              </IconButton>
+            </div>
+          </div>
         </div>
-      )}
-    </header>
+
+        {megaOpen && categories.length > 0 && (
+          <div className="hidden lg:block">
+            <MegaMenu categories={categories} onNavigate={() => setMegaOpen(false)} />
+          </div>
+        )}
+      </header>
+
+      {isMobileMenuOpen && <MobileMenu categories={categories} onClose={closeMobileMenu} />}
+      {isSearchOpen && <SearchOverlay onClose={closeSearch} />}
+    </>
   );
 }

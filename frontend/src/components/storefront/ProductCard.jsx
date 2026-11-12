@@ -1,29 +1,48 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Heart, ShoppingBag, Eye } from 'lucide-react';
+import { Heart, Plus } from 'lucide-react';
 import { useWishlistStore } from '@/stores/useWishlistStore';
 import { useCartStore } from '@/stores/useCartStore';
 import { useUIStore } from '@/stores/useUIStore';
 import PriceDisplay from '@/components/ui/PriceDisplay';
-import Badge from '@/components/ui/Badge';
 import SmartImage from '@/components/ui/SmartImage';
+import { FALLBACK_IMAGE } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 
-export default function ProductCard({ product }) {
+function CardBadge({ children, tone = 'light' }) {
+  return (
+    <span
+      className={cn(
+        'inline-block px-2 py-0.5 text-[11px] font-medium tracking-wide rounded-sm',
+        tone === 'dark' && 'bg-black text-white',
+        tone === 'sale' && 'bg-[var(--color-sale)] text-white',
+        tone === 'light' && 'bg-white text-black'
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+export default function ProductCard({ product, className }) {
   const [hoveredColor, setHoveredColor] = useState(null);
   const toggleWishlist = useWishlistStore((s) => s.toggleItem);
   const addToCart = useCartStore((s) => s.addItem);
-  const addToast = useUIStore((s) => s.addToast);
   const openCartDrawer = useUIStore((s) => s.openCartDrawer);
 
-  const defaultVariant = product.variants[0];
-  const activeVariant = hoveredColor
-    ? product.variants.find((v) => v.color.name === hoveredColor) || defaultVariant
-    : defaultVariant;
+  const variants = product.variants || [];
+  const defaultVariant = variants[0];
+  const activeVariant = (hoveredColor && variants.find((v) => v.color?.name === hoveredColor)) || defaultVariant;
+  const wishlisted = useWishlistStore((s) => s.items.some((i) => i.variantId === defaultVariant?.id));
 
-  const mainImage = activeVariant.images[0];
-  const hoverImage = activeVariant.images[1] || mainImage;
-  const wishlisted = useWishlistStore((s) => s.items.some((i) => i.variantId === defaultVariant.id));
+  if (!defaultVariant) return null;
+
+  const mainImage = activeVariant.images?.[0] || FALLBACK_IMAGE;
+  const hoverImage = activeVariant.images?.[1];
+  const soldOut = variants.every((v) => v.stock === 0);
+  const onSale = activeVariant.mrp > activeVariant.price;
+  const canQuickAdd = variants.length === 1 && activeVariant.stock > 0;
+  const uniqueColors = [...new Map(variants.filter((v) => v.color).map((v) => [v.color.name, v.color])).values()];
 
   const handleWishlist = (e) => {
     e.preventDefault();
@@ -32,7 +51,7 @@ export default function ProductCard({ product }) {
       productId: product.id,
       variantId: defaultVariant.id,
       productName: product.name,
-      image: mainImage,
+      image: defaultVariant.images?.[0] || FALLBACK_IMAGE,
       price: defaultVariant.price,
     });
   };
@@ -40,112 +59,101 @@ export default function ProductCard({ product }) {
   const handleQuickAdd = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (product.variants.length === 1 && activeVariant.stock > 0) {
-      addToCart({
-        productId: product.id,
-        variantId: activeVariant.id,
-        productName: product.name,
-        variantLabel: `${activeVariant.color.name}${activeVariant.size ? ' / ' + activeVariant.size : ''}`,
-        image: mainImage,
-        unitPrice: activeVariant.price,
-        sellingUnit: product.sellingUnit,
-      });
-      addToast({ type: 'success', message: 'Added to cart!' });
-      openCartDrawer();
-    }
+    if (!canQuickAdd) return;
+    addToCart({
+      productId: product.id,
+      variantId: activeVariant.id,
+      productName: product.name,
+      variantLabel: `${activeVariant.color?.name || ''}${activeVariant.size ? ' / ' + activeVariant.size : ''}`,
+      image: mainImage,
+      unitPrice: activeVariant.price,
+      sellingUnit: product.sellingUnit,
+    });
+    openCartDrawer();
   };
 
-  const uniqueColors = [...new Map(product.variants.map((v) => [v.color.name, v.color])).values()];
-
   return (
-    <Link to={`/product/${product.slug}`} className="group block">
-      {/* Image container */}
-      <div className="relative aspect-[3/4] rounded-[var(--radius-card)] overflow-hidden bg-neutral-100 mb-3">
-        {/* Main image with hover swap */}
+    <Link to={`/product/${product.slug}`} className={cn('group block min-w-0', className)}>
+      <div className="relative aspect-[3/4] overflow-hidden bg-neutral-100 rounded-[var(--radius-card)]">
         <SmartImage
           src={mainImage}
           alt={product.name}
-          containerClassName="absolute inset-0 transition-opacity duration-500 group-hover:opacity-0"
-          className="w-full h-full"
+          containerClassName={cn(
+            'absolute inset-0 transition-opacity duration-500',
+            hoverImage && 'lg:group-hover:opacity-0'
+          )}
+          className="w-full h-full transition-transform duration-700 group-hover:scale-[1.03]"
         />
-        <SmartImage
-          src={hoverImage}
-          alt={`${product.name} alternate`}
-          containerClassName="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-          className="w-full h-full"
-        />
+        {hoverImage && (
+          <SmartImage
+            src={hoverImage}
+            alt=""
+            containerClassName="absolute inset-0 opacity-0 transition-opacity duration-500 hidden lg:block lg:group-hover:opacity-100"
+            className="w-full h-full"
+          />
+        )}
 
         {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1">
-          {product.isNewArrival && <Badge color="info">New</Badge>}
-          {product.isBestseller && <Badge color="warning">Bestseller</Badge>}
-          {activeVariant.stock === 0 && <Badge color="error">Sold Out</Badge>}
-          {activeVariant.mrp > activeVariant.price && (
-            <Badge color="success">
-              {Math.round(((activeVariant.mrp - activeVariant.price) / activeVariant.mrp) * 100)}% Off
-            </Badge>
-          )}
+        <div className="absolute top-2.5 left-2.5 flex flex-col items-start gap-1">
+          {soldOut ? (
+            <CardBadge tone="dark">Sold out</CardBadge>
+          ) : onSale ? (
+            <CardBadge tone="sale">Sale</CardBadge>
+          ) : product.isNewArrival ? (
+            <CardBadge>New</CardBadge>
+          ) : null}
         </div>
 
-        {/* Wishlist button */}
+        {/* Wishlist */}
         <button
+          type="button"
           onClick={handleWishlist}
+          aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           className={cn(
-            'absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer',
-            wishlisted
-              ? 'bg-red-50 text-red-500'
-              : 'bg-white/80 text-neutral-500 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 hover:bg-white hover:text-red-500'
+            'absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center transition-opacity cursor-pointer',
+            wishlisted ? 'opacity-100 text-black' : 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100 text-neutral-700 hover:text-black'
           )}
         >
-          <Heart size={18} fill={wishlisted ? 'currentColor' : 'none'} />
+          <Heart size={16} strokeWidth={1.8} fill={wishlisted ? 'currentColor' : 'none'} />
         </button>
 
-        {/* Quick action */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 opacity-100 translate-y-0 lg:opacity-0 lg:translate-y-2 lg:group-hover:opacity-100 lg:group-hover:translate-y-0 transition-all duration-200">
-          {product.variants.length === 1 && activeVariant.stock > 0 ? (
-            <button
-              onClick={handleQuickAdd}
-              className="w-full flex items-center justify-center gap-2 bg-white/95 backdrop-blur-sm text-neutral-800 py-2.5 rounded-lg text-sm font-medium hover:bg-white transition-colors shadow-sm"
-            >
-              <ShoppingBag size={16} />
-              Quick Add
-            </button>
-          ) : (
-            <div className="w-full flex items-center justify-center gap-2 bg-white/95 backdrop-blur-sm text-neutral-800 py-2.5 rounded-lg text-sm font-medium shadow-sm">
-              <Eye size={16} />
-              View Options
-            </div>
-          )}
-        </div>
+        {/* Quick add (single-option products) */}
+        {canQuickAdd && (
+          <button
+            type="button"
+            onClick={handleQuickAdd}
+            aria-label={`Add ${product.name} to cart`}
+            className="absolute bottom-2.5 right-2.5 h-9 min-w-9 px-2.5 rounded-full bg-white text-black shadow-sm flex items-center justify-center gap-1 text-xs font-medium transition-all cursor-pointer lg:opacity-0 lg:translate-y-1 lg:group-hover:opacity-100 lg:group-hover:translate-y-0 hover:bg-black hover:text-white"
+          >
+            <Plus size={16} />
+            <span className="hidden lg:inline">Add</span>
+          </button>
+        )}
       </div>
 
-      {/* Info */}
-      <div className="space-y-1.5">
-        <p className="text-xs text-neutral-400 uppercase tracking-wider">{product.fabric}</p>
-        <h3 className="text-sm font-medium text-neutral-800 line-clamp-2 group-hover:text-primary-600 transition-colors">
+      <div className="pt-3 space-y-1">
+        <h3 className="text-sm text-black leading-snug line-clamp-2 group-hover:underline underline-offset-4 decoration-1">
           {product.name}
         </h3>
-        <PriceDisplay price={activeVariant.price} mrp={activeVariant.mrp} />
+        <PriceDisplay price={activeVariant.price} mrp={activeVariant.mrp} size="sm" showPercent={false} />
 
-        {/* Color swatches */}
         {uniqueColors.length > 1 && (
           <div className="flex items-center gap-1.5 pt-1">
             {uniqueColors.slice(0, 5).map((color) => (
-              <button
+              <span
                 key={color.name}
                 title={color.name}
                 onMouseEnter={() => setHoveredColor(color.name)}
                 onMouseLeave={() => setHoveredColor(null)}
-                onClick={(e) => e.preventDefault()}
                 className={cn(
-                  'w-4 h-4 rounded-full border border-neutral-200 transition-transform hover:scale-125',
-                  hoveredColor === color.name && 'ring-2 ring-primary-400 ring-offset-1'
+                  'w-3.5 h-3.5 rounded-full border border-black/15 transition-transform',
+                  hoveredColor === color.name && 'ring-1 ring-black ring-offset-1'
                 )}
                 style={{ backgroundColor: color.hex }}
               />
             ))}
             {uniqueColors.length > 5 && (
-              <span className="text-xs text-neutral-400">+{uniqueColors.length - 5}</span>
+              <span className="text-xs text-neutral-500">+{uniqueColors.length - 5}</span>
             )}
           </div>
         )}

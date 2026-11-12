@@ -17,7 +17,8 @@ function ScrollToTop() {
 export default function StorefrontLayout() {
   useSyncStores();
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    // "storefront" switches on the customer-site look defined at the end of index.css.
+    <div className="storefront min-h-screen flex flex-col bg-white">
       <ScrollToTop />
       <Navbar />
       <main className="flex-1">
