@@ -43,6 +43,8 @@ return [
         'dir'              => __DIR__ . '/../uploads',   // public_html/uploads
         'url_prefix'       => '/uploads',
         'max_file_size_mb' => 5,
+        // Reel videos (MP4). PHP's own limits (upload_max_filesize, post_max_size in hPanel) must allow this too.
+        'max_video_size_mb' => 50,
     ],
 
     // Links in account emails (password reset, admin invites) point here. No slash at the end.

@@ -14,7 +14,7 @@
  * The admin checks log in as the demo admin from database/seed.sql. If you changed it,
  * set ADMIN_EMAIL and ADMIN_PASSWORD before running (PowerShell: $env:ADMIN_PASSWORD="...").
  *
- * It writes test data: a new customer "Smoke Test", a category with a subcategory and a product
+ * It writes test data: a new customer "Smoke Test", a category with a subcategory, a product and a reel
  * (all removed again at the end), an address (deleted), a review, and an order (cancelled again).
  * It also asks for a password-reset email for the test customer (an @example.com address).
  * Run it against your local or test database, not the live shop.
@@ -32,6 +32,13 @@ const PNG_1PX = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
   'base64',
 );
+
+// The first bytes of an MP4 and of a QuickTime MOV: enough for the server's file-type check.
+const MP4_TINY = Buffer.concat([
+  Buffer.from([0, 0, 0, 0x20]), Buffer.from('ftypisom'), Buffer.from([0, 0, 2, 0]), Buffer.from('isomiso2avc1mp41'),
+  Buffer.from([0, 0, 0, 8]), Buffer.from('free'),
+]);
+const MOV_TINY = Buffer.concat([Buffer.from([0, 0, 0, 0x14]), Buffer.from('ftypqt  '), Buffer.from([0, 0, 0, 0]), Buffer.from('qt  ')]);
 
 let passed = 0;
 let failed = 0;
@@ -669,6 +676,81 @@ async function main() {
     expect('A cancelled order cannot be reopened', r, 400);
     r = await api('GET', `/orders/${orderId}`, { cookie: cust });
     expect('The customer sees the order as cancelled', r, 200, (b) => b.status === 'cancelled');
+  }
+
+  // ------------------------------------------------------------ 6b
+  section('6b. Reels (home page videos)');
+  r = await api('GET', '/reels');
+  expect('GET /reels (the reels customers see)', r, 200, (b) => Array.isArray(b));
+  r = await api('GET', '/admin/reels', { cookie: cust });
+  expect('A customer cannot manage reels (403)', r, 403);
+  if (!admin) {
+    skip('Reel management', 'admin login failed');
+  } else {
+    r = await api('GET', '/admin/reels', { cookie: admin });
+    if (r.status === 503 && errCode(r) === 'SETUP_REQUIRED') {
+      check('The reels table exists (run database/migration-2026-11-reels.sql)', false, r.text);
+    } else {
+      expect('GET /admin/reels lists every reel and the upload limits', r, 200, (b) => Array.isArray(b.items) && b.maxVideoMb >= 1 && b.maxImageMb >= 1);
+
+      const videoForm = new FormData();
+      videoForm.append('video', new Blob([MP4_TINY], { type: 'video/mp4' }), 'smoke-reel.mp4');
+      r = await api('POST', '/reels/videos', { cookie: admin, form: videoForm });
+      expect('POST /reels/videos uploads a video', r, 201, (b) => /^(https?:\/\/[^/]+)?\/uploads\/[^/]+\.mp4$/.test(b.url));
+      const videoUrl = r.status === 201 ? r.json.url : null;
+
+      const fakeVideo = new FormData();
+      fakeVideo.append('video', new Blob(['<?php echo "hacked"; ?>'], { type: 'video/mp4' }), 'evil.mp4');
+      r = await api('POST', '/reels/videos', { cookie: admin, form: fakeVideo });
+      expect('A file that is not a video is refused', r, 400, () => errCode(r) === 'INVALID_FILE_TYPE');
+      const movForm = new FormData();
+      movForm.append('video', new Blob([MOV_TINY], { type: 'video/quicktime' }), 'clip.mov');
+      r = await api('POST', '/reels/videos', { cookie: admin, form: movForm });
+      expect('A MOV video is refused with a hint to use MP4', r, 400, (b) => errCode(r) === 'INVALID_FILE_TYPE' && /MP4/.test(b.error.message));
+      r = await api('POST', '/reels/videos', { cookie: cust, form: videoForm });
+      expect('A customer cannot upload reel videos (403)', r, 403);
+
+      const coverForm = new FormData();
+      coverForm.append('image', new Blob([PNG_1PX], { type: 'image/png' }), 'smoke-cover.png');
+      r = await api('POST', '/reels/covers', { cookie: admin, form: coverForm });
+      expect('POST /reels/covers uploads a cover picture', r, 201, (b) => /^(https?:\/\/[^/]+)?\/uploads\/[^/]+\.png$/.test(b.url));
+      const coverUrl = r.status === 201 ? r.json.url : null;
+
+      r = await api('POST', '/reels', { cookie: admin, json: { coverUrl } });
+      expect('A reel without a video is refused', r, 400, (b) => b.error.details?.[0]?.path === 'videoUrl');
+      r = await api('POST', '/reels', { cookie: admin, json: { videoUrl } });
+      expect('A reel without a cover picture is refused', r, 400, (b) => b.error.details?.[0]?.path === 'coverUrl');
+      r = await api('POST', '/reels', { cookie: admin, json: { videoUrl: 'https://www.instagram.com/reel/abc123/', coverUrl } });
+      expect('An Instagram page link is refused (it cannot play on the website)', r, 400, (b) => b.error.details?.[0]?.path === 'videoUrl');
+
+      let reel = null;
+      if (videoUrl && coverUrl) {
+        const reelBody = { title: `Smoke reel ${STAMP}`, videoUrl, coverUrl, sortOrder: 0 };
+        if (product) reelBody.productId = product.id;
+        r = await api('POST', '/reels', { cookie: admin, json: reelBody });
+        expect('POST /reels creates a reel', r, 201, (b) => b.videoUrl === videoUrl && b.coverUrl === coverUrl && b.isActive === true
+          && (!product || b.product?.slug === product.slug) && ISO.test(b.createdAt));
+        reel = r.status === 201 ? r.json : null;
+      }
+      if (reel) {
+        r = await api('GET', '/reels');
+        expect('The new reel is on the website', r, 200, (b) => ids(b).includes(reel.id));
+        r = await api('PUT', `/reels/${reel.id}`, { cookie: admin, json: { isActive: false } });
+        expect('PUT /reels/:id hides the reel', r, 200, (b) => b.isActive === false && b.videoUrl === videoUrl);
+        r = await api('GET', '/reels');
+        expect('A hidden reel is not on the website', r, 200, (b) => !ids(b).includes(reel.id));
+        r = await api('PUT', `/reels/${reel.id}`, { cookie: admin, json: { productId: 999999999 } });
+        expect('Linking a product that does not exist is refused', r, 400, (b) => b.error.details?.[0]?.path === 'productId');
+        r = await api('PUT', `/reels/${reel.id}`, { cookie: cust, json: { isActive: true } });
+        expect('A customer cannot change reels (403)', r, 403);
+        r = await api('DELETE', `/reels/${reel.id}`, { cookie: admin });
+        expect('DELETE /reels/:id', r, 204);
+        r = await request('GET', fullUrl(videoUrl));
+        check('The deleted reel\'s video file is removed', !(r.status === 200 && (r.headers.get('content-type') || '').startsWith('video/')), `got HTTP ${r.status}`);
+        r = await api('PUT', `/reels/${reel.id}`, { cookie: admin, json: { isActive: true } });
+        expect('The deleted reel is gone', r, 404);
+      }
+    }
   }
 
   // ------------------------------------------------------------ 7

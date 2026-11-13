@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router';
-import { LayoutDashboard, Package, FolderTree, ShoppingCart, Warehouse, Store, LogOut, Users, Settings } from 'lucide-react';
+import { LayoutDashboard, Package, FolderTree, ShoppingCart, Warehouse, Store, LogOut, Users, Settings, Film } from 'lucide-react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useLogout } from '@/hooks/useLogout';
 import { isRootAdmin, ROLE_LABELS } from '@/lib/roles';
@@ -10,6 +10,7 @@ const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/admin/products', icon: Package, label: 'Products' },
   { to: '/admin/categories', icon: FolderTree, label: 'Categories' },
+  { to: '/admin/reels', icon: Film, label: 'Reels' },
   { to: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
   { to: '/admin/inventory', icon: Warehouse, label: 'Inventory' },
   { to: '/admin/users', icon: Users, label: 'Admin Users', rootOnly: true },

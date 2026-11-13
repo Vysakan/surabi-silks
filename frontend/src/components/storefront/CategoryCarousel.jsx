@@ -5,10 +5,10 @@ import SliderArrows, { useSlider } from '@/components/storefront/SliderArrows';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import { Skeleton } from '@/components/ui/Skeleton';
 
-// About 2.3 tiles on phones, then 3 / 5 per view (gaps subtracted).
-const SLIDE = 'snap-start shrink-0 w-[42%] sm:w-[calc((100%_-_2rem)/3)] lg:w-[calc((100%_-_6rem)/5)]';
+// About 1.6 tiles on phones, 2.6 on tablets, 4.4 on desktop: the next tile peeks in to show the row slides.
+const SLIDE = 'snap-start shrink-0 w-[62%] sm:w-[38%] lg:w-[calc((100%_-_2rem)/4.4)]';
 
-/** "Shop by collection" on the home page: every main category in a swipeable row, plus View all. */
+/** "Shop by collection" on the home page: every main category in a row you can swipe or drag. */
 export default function CategoryCarousel({ title = 'Shop by collection' }) {
   const { categories, loading } = useCategoryTree();
   const { trackRef, canPrev, canNext, scroll } = useSlider([categories.length, loading]);
@@ -18,7 +18,7 @@ export default function CategoryCarousel({ title = 'Shop by collection' }) {
   return (
     <section className="py-10 md:py-14">
       <div className="max-w-7xl mx-auto px-4 lg:px-6">
-        <ScrollReveal className="flex items-end justify-between gap-4 mb-6">
+        <ScrollReveal className="flex items-end justify-between gap-4 mb-5 md:mb-6">
           <h2 className="sf-heading">{title}</h2>
           <div className="flex items-center gap-4 shrink-0">
             <Link to="/categories" className="sf-link">View all</Link>
@@ -28,13 +28,12 @@ export default function CategoryCarousel({ title = 'Shop by collection' }) {
 
         <div
           ref={trackRef}
-          className="flex gap-3 md:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0 scroll-px-4 lg:scroll-px-0"
+          className="flex gap-2 md:gap-2.5 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide overscroll-x-contain -mx-4 px-4 lg:mx-0 lg:px-0 scroll-px-4 lg:scroll-px-0 md:cursor-grab"
         >
           {loading
             ? Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className={SLIDE}>
-                <Skeleton className="aspect-[3/4] rounded-none" />
-                <Skeleton className="h-4 w-2/3 mt-3" />
+                <Skeleton className="aspect-square rounded-2xl" />
               </div>
             ))
             : categories.map((cat) => (

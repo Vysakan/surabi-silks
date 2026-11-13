@@ -9,6 +9,7 @@ use App\Controllers\CartController;
 use App\Controllers\CategoryController;
 use App\Controllers\OrderController;
 use App\Controllers\ProductController;
+use App\Controllers\ReelController;
 use App\Controllers\ReviewController;
 use App\Controllers\WishlistController;
 use App\Http\Request;
@@ -90,6 +91,15 @@ final class Routes
         $r->post('/categories', [$auth, $admin, $body(S::createCategory())], [CategoryController::class, 'create']);
         $r->put('/categories/:id', [$auth, $admin, $body(S::updateCategory())], [CategoryController::class, 'update']);
         $r->delete('/categories/:id', [$auth, $admin], [CategoryController::class, 'remove']);
+
+        // Reels (home page "See it in action"): upload the video and cover first, then save the reel
+        $r->get('/reels', [], [ReelController::class, 'getActive']);
+        $r->get('/admin/reels', [$auth, $admin], [ReelController::class, 'adminList']);
+        $r->post('/reels/videos', [$auth, $admin], [ReelController::class, 'uploadVideo']);
+        $r->post('/reels/covers', [$auth, $admin], [ReelController::class, 'uploadCover']);
+        $r->post('/reels', [$auth, $admin, $body(S::createReel())], [ReelController::class, 'create']);
+        $r->put('/reels/:id', [$auth, $admin, $body(S::updateReel())], [ReelController::class, 'update']);
+        $r->delete('/reels/:id', [$auth, $admin], [ReelController::class, 'remove']);
 
         // Wishlist
         $r->get('/wishlist', [$auth], [WishlistController::class, 'getAll']);

@@ -70,6 +70,7 @@ export const router = createBrowserRouter([
           { path: 'products/new', ...p(() => import('@/pages/admin/ProductFormPage')) },
           { path: 'products/:id/edit', ...p(() => import('@/pages/admin/ProductFormPage')) },
           { path: 'categories', ...p(() => import('@/pages/admin/CategoryManagementPage')) },
+          { path: 'reels', ...p(() => import('@/pages/admin/ReelsPage')) },
           { path: 'orders', ...p(() => import('@/pages/admin/OrderListPage')) },
           { path: 'orders/:id', ...p(() => import('@/pages/admin/OrderDetailPage')) },
           { path: 'inventory', ...p(() => import('@/pages/admin/InventoryPage')) },

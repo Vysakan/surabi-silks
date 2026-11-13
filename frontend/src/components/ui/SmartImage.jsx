@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { cn } from '@/lib/cn';
 import { FALLBACK_IMAGE } from '@/lib/constants';
+import { mediaUrl } from '@/lib/media';
 
 export default function SmartImage({
   src,
@@ -72,7 +73,7 @@ export default function SmartImage({
       )}
       <img
         ref={imgRef}
-        src={src}
+        src={mediaUrl(src)}
         alt={alt}
         loading={loading}
         fetchPriority={fetchPriority}

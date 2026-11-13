@@ -141,6 +141,24 @@ final class Schemas
         return self::createCategory()->partial()->omit(['slug']);
     }
 
+    // reels (video and cover are checked in ReelController so the message can say what to do)
+    public static function createReel(): Rule
+    {
+        return Rule::obj([
+            'title' => Rule::str()->trimmed()->max(150)->nullable()->optional(),
+            'videoUrl' => Rule::str()->trimmed()->max(500)->nullable()->optional(),
+            'coverUrl' => Rule::str()->trimmed()->max(500)->nullable()->optional(),
+            'productId' => Rule::num()->integer()->positive()->nullable()->withDefault(null),
+            'sortOrder' => Rule::num()->integer()->min(0)->max(100000)->withDefault(0),
+            'isActive' => Rule::bool()->withDefault(true),
+        ]);
+    }
+
+    public static function updateReel(): Rule
+    {
+        return self::createReel()->partial();
+    }
+
     // order.js
     private static function orderAddress(): Rule
     {

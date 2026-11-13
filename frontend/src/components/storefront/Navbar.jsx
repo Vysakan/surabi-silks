@@ -11,18 +11,15 @@ import { isStaff } from '@/lib/roles';
 import { cn } from '@/lib/cn';
 import SearchOverlay from '@/components/storefront/SearchOverlay';
 
+// Thin bar above the header. Set to '' to hide it.
+const ANNOUNCEMENT = 'Free shipping on orders above ₹2,000';
+
 // Main categories shown as columns in the "Shop" menu; the rest are on /categories.
 const MEGA_MENU_LIMIT = 5;
 
-const PAGE_LINKS = [
-  { to: '/categories', label: 'Collections' },
-  { to: '/about-us', label: 'About' },
-  { to: '/contact-us', label: 'Contact' },
-];
-
 const navLinkClass = ({ isActive }) =>
   cn(
-    'relative py-2 text-[0.9rem] text-neutral-700 hover:text-black transition-colors',
+    'relative py-1 text-[0.8125rem] tracking-[0.04em] uppercase text-neutral-800 hover:text-black transition-colors',
     'after:absolute after:left-0 after:-bottom-0.5 after:h-px after:bg-black after:transition-all',
     isActive ? 'text-black after:w-full' : 'after:w-0 hover:after:w-full'
   );
@@ -52,7 +49,7 @@ function CountBubble({ count }) {
 function MegaMenu({ categories, onNavigate }) {
   const shown = categories.slice(0, MEGA_MENU_LIMIT);
   return (
-    <div className="absolute left-0 right-0 top-full bg-white border-t border-neutral-200 shadow-[0_12px_24px_-12px_rgba(0,0,0,0.15)] sf-slide-down">
+    <div className="absolute left-0 right-0 top-full bg-white border-t border-neutral-100 shadow-[0_12px_24px_-12px_rgba(0,0,0,0.15)] sf-slide-down">
       <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-8">
         {shown.map((cat) => (
           <div key={cat.id} className="min-w-0">
@@ -98,9 +95,9 @@ function MobileMenu({ categories, onClose }) {
     <div className="fixed inset-0 z-50 lg:hidden">
       <div className="absolute inset-0 bg-black/40 sf-fade-in" onClick={onClose} />
       <div className="absolute left-0 top-0 h-full w-[85%] max-w-sm bg-white flex flex-col sf-slide-in-left">
-        <div className="flex items-center justify-between px-5 h-16 border-b border-neutral-200">
-          <span className="text-sm font-medium tracking-wide uppercase">Menu</span>
-          <IconButton label="Close menu" onClick={onClose} className="-mr-2"><X size={22} /></IconButton>
+        <div className="flex items-center justify-between px-5 h-14 border-b border-neutral-100">
+          <span className="text-xs font-medium tracking-[0.14em] uppercase">Menu</span>
+          <IconButton label="Close menu" onClick={onClose} className="-mr-2"><X size={22} strokeWidth={1.6} /></IconButton>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-5">
@@ -144,20 +141,19 @@ function MobileMenu({ categories, onClose }) {
               </div>
             );
           })}
-          {PAGE_LINKS.map((l) => (
+          {[
+            { to: '/categories', label: 'All collections' },
+            { to: '/wishlist', label: 'Wishlist' },
+            { to: '/about-us', label: 'About' },
+            { to: '/contact-us', label: 'Contact' },
+          ].map((l) => (
             <Link key={l.to} to={l.to} onClick={onClose} className={row}>
               {l.label} <ChevronRight size={16} className="text-neutral-400" />
             </Link>
           ))}
-          <Link to="/blog" onClick={onClose} className={row}>
-            Blog <ChevronRight size={16} className="text-neutral-400" />
-          </Link>
-          <Link to="/wishlist" onClick={onClose} className={row}>
-            Wishlist <Heart size={16} className="text-neutral-400" />
-          </Link>
         </nav>
 
-        <div className="px-5 py-4 border-t border-neutral-200 bg-[var(--color-surface)]">
+        <div className="px-5 py-4 border-t border-neutral-100 bg-[var(--color-surface)]">
           {isAuthenticated ? (
             <>
               {isStaff(user) ? (
@@ -178,7 +174,7 @@ function MobileMenu({ categories, onClose }) {
             </>
           ) : (
             <Link to="/login" onClick={onClose} className="flex items-center gap-2 py-2 text-sm">
-              <User size={18} /> Log in / Create account
+              <User size={18} strokeWidth={1.6} /> Log in / Create account
             </Link>
           )}
         </div>
@@ -187,6 +183,10 @@ function MobileMenu({ categories, onClose }) {
   );
 }
 
+/**
+ * Minimal header: menu links on the left, the logo in the centre, icons on the right.
+ * Phones: menu button on the left, logo in the centre, search and cart on the right.
+ */
 export default function Navbar() {
   const [megaOpen, setMegaOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -230,40 +230,27 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Announcement bar */}
-      <div className="bg-[#121212] text-white text-[11px] sm:text-xs tracking-wide text-center py-2 px-4 truncate">
-        Free shipping on orders above ₹2,000 &nbsp;·&nbsp; Authentic handloom collection
-      </div>
+      {ANNOUNCEMENT && (
+        <div className="bg-[#121212] text-white text-[11px] tracking-[0.06em] text-center py-1.5 px-4 truncate">
+          {ANNOUNCEMENT}
+        </div>
+      )}
 
       <header
         className={cn(
-          'sticky top-0 z-40 bg-white border-b transition-colors',
+          'sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b transition-colors',
           scrolled ? 'border-neutral-200' : 'border-transparent'
         )}
         onMouseLeave={() => setMegaOpen(false)}
       >
         <div className="max-w-7xl mx-auto px-4 lg:px-6">
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center h-16 lg:h-[4.5rem]">
-            {/* Left: mobile menu + search / desktop logo */}
-            <div className="flex items-center">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center h-14 lg:h-[4.25rem]">
+            {/* Left */}
+            <div className="flex items-center min-w-0">
               <IconButton label="Open menu" onClick={toggleMobileMenu} className="lg:hidden -ml-2">
-                <Menu size={22} strokeWidth={1.6} />
+                <Menu size={22} strokeWidth={1.5} />
               </IconButton>
-              <IconButton label="Search" onClick={openSearch} className="lg:hidden">
-                <Search size={20} strokeWidth={1.6} />
-              </IconButton>
-              <Link to="/" className="hidden lg:flex items-center" aria-label="Surabhi Silks home">
-                <img src="/logo.jpg" alt="Surabhi Silks" className="h-11 w-auto" />
-              </Link>
-            </div>
-
-            {/* Centre: mobile logo / desktop menu */}
-            <div className="flex justify-center">
-              <Link to="/" className="lg:hidden flex items-center" aria-label="Surabhi Silks home">
-                <img src="/logo.jpg" alt="Surabhi Silks" className="h-10 w-auto" />
-              </Link>
-              <nav className="hidden lg:flex items-center gap-8">
-                <NavLink to="/" end className={navLinkClass} onMouseEnter={() => setMegaOpen(false)}>Home</NavLink>
+              <nav className="hidden lg:flex items-center gap-7">
                 <div onMouseEnter={() => setMegaOpen(true)} className="flex items-center">
                   <NavLink
                     to="/shop"
@@ -271,31 +258,35 @@ export default function Navbar() {
                     onFocus={() => setMegaOpen(true)}
                   >
                     Shop
-                    <ChevronDown size={14} className={cn('transition-transform', megaOpen && 'rotate-180')} />
+                    <ChevronDown size={13} className={cn('transition-transform', megaOpen && 'rotate-180')} />
                   </NavLink>
                 </div>
-                {PAGE_LINKS.map((l) => (
-                  <NavLink key={l.to} to={l.to} className={navLinkClass} onMouseEnter={() => setMegaOpen(false)}>
-                    {l.label}
-                  </NavLink>
-                ))}
+                <NavLink to="/categories" className={navLinkClass} onMouseEnter={() => setMegaOpen(false)}>Collections</NavLink>
+                <NavLink to="/contact-us" className={navLinkClass} onMouseEnter={() => setMegaOpen(false)}>Contact</NavLink>
               </nav>
             </div>
 
+            {/* Centre: logo */}
+            <Link to="/" className="flex items-center justify-center" aria-label="Surabhi Silks home" onMouseEnter={() => setMegaOpen(false)}>
+              <img src="/logo.jpg" alt="Surabhi Silks" className="h-9 lg:h-11 w-auto" />
+            </Link>
+
             {/* Right: icons */}
-            <div className="flex items-center justify-end gap-0.5 sm:gap-1">
-              <IconButton label="Search" onClick={openSearch} className="hidden lg:block">
-                <Search size={20} strokeWidth={1.6} />
+            <div className="flex items-center justify-end gap-0.5 sm:gap-1" onMouseEnter={() => setMegaOpen(false)}>
+              <IconButton label="Search" onClick={openSearch}>
+                <Search size={20} strokeWidth={1.5} />
               </IconButton>
-              <Link to={accountLink} aria-label="Account" className="p-2 text-neutral-900 hover:opacity-60 transition-opacity">
-                <User size={20} strokeWidth={1.6} />
+              <Link to={accountLink} aria-label="Account" className="hidden sm:block p-2 text-neutral-900 hover:opacity-60 transition-opacity">
+                <User size={20} strokeWidth={1.5} />
               </Link>
-              <Link to="/wishlist" aria-label="Wishlist" className="relative p-2 text-neutral-900 hover:opacity-60 transition-opacity hidden sm:block">
-                <Heart size={20} strokeWidth={1.6} />
-                <CountBubble count={wishlistCount} />
-              </Link>
+              {wishlistCount > 0 && (
+                <Link to="/wishlist" aria-label={`Wishlist (${wishlistCount})`} className="relative hidden sm:block p-2 text-neutral-900 hover:opacity-60 transition-opacity">
+                  <Heart size={20} strokeWidth={1.5} />
+                  <CountBubble count={wishlistCount} />
+                </Link>
+              )}
               <IconButton label="Cart" onClick={openCartDrawer} className="-mr-2">
-                <ShoppingBag size={20} strokeWidth={1.6} />
+                <ShoppingBag size={20} strokeWidth={1.5} />
                 <CountBubble count={totalItems} />
               </IconButton>
             </div>

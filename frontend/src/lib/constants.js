@@ -1,5 +1,8 @@
 export const FALLBACK_IMAGE = '/images/products/fabrics-stack.png';
 
+// Your Instagram page, shown as "Follow us" next to the reels on the home page. Leave '' to hide.
+export const INSTAGRAM_URL = '';
+
 export const CURRENCY = 'INR';
 export const CURRENCY_SYMBOL = '₹';
 export const LOCALE = 'en-IN';

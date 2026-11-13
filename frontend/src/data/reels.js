@@ -1,23 +1,57 @@
 /**
- * "See it in action" videos on the home page (like Instagram reels).
- * The section stays hidden while this list is empty.
- *
- * To add one:
- *   1. Put a short vertical video (MP4, 9:16, ideally under 5 MB) in public/videos/
- *      and a still image of it in public/images/reels/.
- *   2. Add an entry below. `productSlug` is optional: it adds a "Shop now" link
- *      to that product (the part after /product/ in its address).
- *
- * Example:
- *   {
- *     id: 'reel-1',
- *     video: '/videos/kanchipuram-drape.mp4',
- *     poster: '/images/reels/kanchipuram-drape.jpg',
- *     caption: 'Kanchipuram silk, draped',
- *     productSlug: 'kanchipuram-silk-saree-peacock-motif',
- *   },
+ * Demo reels, used only when VITE_DATA_PROVIDER=dummy (no backend).
+ * On the live site, reels are added in the admin dashboard: Admin > Reels.
+ * Demo reels have no video, so they show their cover picture only.
  */
-export const reels = [];
-
-// Your Instagram page; shown as "Follow us" next to the videos. Leave '' to hide.
-export const instagramUrl = '';
+export const reels = [
+  {
+    id: 'reel-demo-1',
+    title: 'Festive silks, ready to drape',
+    videoUrl: '',
+    coverUrl: '/images/blog/purple-saree-model.jpg',
+    productId: null,
+    product: null,
+    sortOrder: 0,
+    isActive: true,
+  },
+  {
+    id: 'reel-demo-2',
+    title: 'New arrivals this week',
+    videoUrl: '',
+    coverUrl: '/images/blog/bridal-group.jpg',
+    productId: null,
+    product: null,
+    sortOrder: 1,
+    isActive: true,
+  },
+  {
+    id: 'reel-demo-3',
+    title: 'Kanchipuram, up close',
+    videoUrl: '',
+    coverUrl: '/images/blog/silk-closeup.jpg',
+    productId: null,
+    product: null,
+    sortOrder: 2,
+    isActive: true,
+  },
+  {
+    id: 'reel-demo-4',
+    title: 'How we fold a silk saree',
+    videoUrl: '',
+    coverUrl: '/images/blog/green-silk-care.jpg',
+    productId: null,
+    product: null,
+    sortOrder: 3,
+    isActive: true,
+  },
+  {
+    id: 'reel-demo-5',
+    title: 'Behind the counter',
+    videoUrl: '',
+    coverUrl: '/images/blog/festive-display.jpg',
+    productId: null,
+    product: null,
+    sortOrder: 4,
+    isActive: true,
+  },
+];
