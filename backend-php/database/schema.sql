@@ -1,7 +1,8 @@
 -- Surabi Silks - full database schema (MySQL 8 / MariaDB 10.4+)
 -- Import this FIRST in Hostinger hPanel > Databases > phpMyAdmin > (your database) > Import.
 -- It only creates tables (IF NOT EXISTS); it never deletes data. Same tables as backend/migrations/001-013,
--- plus the account-security changes of migration-2026-11-auth.sql (17 tables).
+-- plus the account-security changes of migration-2026-11-auth.sql and the reels of
+-- migration-2026-11-reels.sql (18 tables).
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
@@ -282,6 +283,22 @@ CREATE TABLE IF NOT EXISTS order_status_history (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_order_history_order (order_id, created_at),
   CONSTRAINT fk_order_history_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- reels (migration-2026-11-reels.sql): home-page videos managed in Admin > Reels
+CREATE TABLE IF NOT EXISTS reels (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(150) DEFAULT NULL,
+  video_url VARCHAR(500) NOT NULL,
+  cover_url VARCHAR(500) NOT NULL,
+  product_id INT UNSIGNED DEFAULT NULL,
+  sort_order INT NOT NULL DEFAULT 0,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_reels_active_order (is_active, sort_order),
+  INDEX idx_reels_product (product_id),
+  CONSTRAINT fk_reels_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
