@@ -23,7 +23,7 @@ export default function CategoriesPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 md:gap-x-6 gap-y-10">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i}>
-              <Skeleton className="aspect-[3/4] rounded-none" />
+              <Skeleton className="aspect-[var(--tile-aspect)] rounded-[var(--radius-card)]" />
               <Skeleton className="h-4 w-2/3 mt-3" />
             </div>
           ))}

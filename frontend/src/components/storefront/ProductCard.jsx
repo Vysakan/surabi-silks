@@ -74,7 +74,7 @@ export default function ProductCard({ product, className }) {
 
   return (
     <Link to={`/product/${product.slug}`} className={cn('group block min-w-0', className)}>
-      <div className="relative aspect-[3/4] overflow-hidden bg-neutral-100 rounded-[var(--radius-card)]">
+      <div className="relative aspect-[var(--product-aspect)] overflow-hidden bg-neutral-100 rounded-[var(--radius-card)]">
         <SmartImage
           src={mainImage}
           alt={product.name}
@@ -94,7 +94,7 @@ export default function ProductCard({ product, className }) {
         )}
 
         {/* Badges */}
-        <div className="absolute top-2.5 left-2.5 flex flex-col items-start gap-1">
+        <div className="absolute top-3 left-3 flex flex-col items-start gap-1">
           {soldOut ? (
             <CardBadge tone="dark">Sold out</CardBadge>
           ) : onSale ? (
@@ -110,7 +110,7 @@ export default function ProductCard({ product, className }) {
           onClick={handleWishlist}
           aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           className={cn(
-            'absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center transition-opacity cursor-pointer',
+            'absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center transition-opacity cursor-pointer',
             wishlisted ? 'opacity-100 text-black' : 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100 text-neutral-700 hover:text-black'
           )}
         >
@@ -123,7 +123,7 @@ export default function ProductCard({ product, className }) {
             type="button"
             onClick={handleQuickAdd}
             aria-label={`Add ${product.name} to cart`}
-            className="absolute bottom-2.5 right-2.5 h-9 min-w-9 px-2.5 rounded-full bg-white text-black shadow-sm flex items-center justify-center gap-1 text-xs font-medium transition-all cursor-pointer lg:opacity-0 lg:translate-y-1 lg:group-hover:opacity-100 lg:group-hover:translate-y-0 hover:bg-black hover:text-white"
+            className="absolute bottom-3 right-3 h-9 min-w-9 px-2.5 rounded-full bg-white text-black shadow-sm flex items-center justify-center gap-1 text-xs font-medium transition-all cursor-pointer lg:opacity-0 lg:translate-y-1 lg:group-hover:opacity-100 lg:group-hover:translate-y-0 hover:bg-black hover:text-white"
           >
             <Plus size={16} />
             <span className="hidden lg:inline">Add</span>

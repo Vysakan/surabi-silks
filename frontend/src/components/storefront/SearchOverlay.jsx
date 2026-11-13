@@ -17,7 +17,7 @@ function ResultTile({ product, onNavigate }) {
       <SmartImage
         src={variant?.images?.[0] || FALLBACK_IMAGE}
         alt={product.name}
-        containerClassName="aspect-[3/4] bg-neutral-100"
+        containerClassName="aspect-[var(--product-aspect)] bg-neutral-100 rounded-[var(--radius-card)]"
         className="w-full h-full transition-transform duration-500 group-hover:scale-[1.03]"
       />
       <p className="mt-2 text-sm text-black line-clamp-1 group-hover:underline underline-offset-4">{product.name}</p>

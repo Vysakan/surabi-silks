@@ -6,29 +6,50 @@ import SliderArrows, { useSlider } from '@/components/storefront/SliderArrows';
 import ReelViewer from '@/components/storefront/ReelViewer';
 import SmartImage from '@/components/ui/SmartImage';
 import ScrollReveal from '@/components/ui/ScrollReveal';
+import InstagramIcon from '@/components/ui/InstagramIcon';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isStaff } from '@/lib/roles';
+import { isInstagramReel } from '@/lib/instagram';
 import { INSTAGRAM_URL } from '@/lib/constants';
 
 // About 1.7 reels on phones, 3 on tablets, 4 on desktop.
 const SLIDE = 'snap-start shrink-0 w-[58%] sm:w-[calc((100%_-_1.5rem)/3)] lg:w-[calc((100%_-_3rem)/4)]';
 
 function ReelCard({ reel, onOpen }) {
+  const instagram = isInstagramReel(reel);
   return (
     <button
       type="button"
       onClick={onOpen}
-      className="group relative block w-full aspect-[9/16] overflow-hidden rounded-2xl bg-neutral-200 text-left cursor-pointer"
+      className="group relative block w-full aspect-[9/16] overflow-hidden rounded-[var(--radius-card)] bg-neutral-200 text-left cursor-pointer"
       aria-label={`Play video${reel.title ? `: ${reel.title}` : ''}`}
+      data-reel-source={instagram ? 'instagram' : 'video'}
     >
-      <SmartImage
-        src={reel.coverUrl}
-        alt=""
-        draggable={false}
-        containerClassName="absolute inset-0"
-        className="w-full h-full transition-transform duration-700 group-hover:scale-[1.03]"
-      />
+      {reel.coverUrl ? (
+        <SmartImage
+          src={reel.coverUrl}
+          alt=""
+          draggable={false}
+          containerClassName="absolute inset-0"
+          className="w-full h-full transition-transform duration-700 group-hover:scale-[1.03]"
+        />
+      ) : (
+        // An Instagram reel added without a cover picture
+        <span className="absolute inset-0 bg-[linear-gradient(160deg,#f9ce34_0%,#ee2a7b_45%,#6228d7_100%)]">
+          <span className="absolute inset-0 bg-black/25" />
+          {reel.title && (
+            <span className="absolute inset-x-4 top-14 text-white text-base md:text-lg font-medium leading-snug line-clamp-4">
+              {reel.title}
+            </span>
+          )}
+        </span>
+      )}
       <span className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+      {instagram && (
+        <span className="absolute top-3 left-3 w-8 h-8 rounded-full bg-black/35 text-white flex items-center justify-center" title="Instagram reel">
+          <InstagramIcon size={16} />
+        </span>
+      )}
       <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/95 text-black flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-110">
         <Play size={20} fill="currentColor" className="ml-0.5" />
       </span>

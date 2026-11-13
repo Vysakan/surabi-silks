@@ -67,7 +67,7 @@ export default function ImageGallery({ images = [], alt = '' }) {
 
       {/* Desktop */}
       <div className="hidden lg:block">
-        <div className="relative aspect-[3/4] bg-neutral-100 overflow-hidden group">
+        <div className="relative aspect-[3/4] bg-neutral-100 overflow-hidden rounded-[var(--radius-card)] group">
           {images.map((img, i) => (
             <SmartImage
               key={`${img}-${i}`}
@@ -103,7 +103,7 @@ export default function ImageGallery({ images = [], alt = '' }) {
                 aria-label={`Show photo ${i + 1}`}
                 aria-current={i === active}
                 className={cn(
-                  'relative aspect-[3/4] bg-neutral-100 overflow-hidden cursor-pointer transition-opacity',
+                  'relative aspect-[3/4] bg-neutral-100 overflow-hidden rounded-lg cursor-pointer transition-opacity',
                   i === active ? 'ring-1 ring-black ring-offset-2' : 'opacity-70 hover:opacity-100'
                 )}
               >

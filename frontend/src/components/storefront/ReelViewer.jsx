@@ -1,13 +1,42 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, Play } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, Play, ExternalLink } from 'lucide-react';
 import SmartImage from '@/components/ui/SmartImage';
+import InstagramEmbed from '@/components/storefront/InstagramEmbed';
+import InstagramIcon from '@/components/ui/InstagramIcon';
 import { mediaUrl } from '@/lib/media';
+import { isInstagramReel, parseInstagramUrl } from '@/lib/instagram';
 import { formatPrice } from '@/lib/formatters';
 import { FALLBACK_IMAGE } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 
-/** Full-screen player for the home-page reels. Arrow keys / swipe move between videos, Esc closes. */
+/** "Shop now" card for the product linked to a reel. */
+function ProductLink({ product, onClose }) {
+  return (
+    <Link
+      to={`/product/${product.slug}`}
+      onClick={onClose}
+      className="flex items-center gap-3 bg-white rounded-xl p-2 pr-3 hover:bg-neutral-100 transition-colors"
+    >
+      <SmartImage
+        src={product.image || FALLBACK_IMAGE}
+        alt=""
+        containerClassName="w-12 h-14 rounded-md overflow-hidden shrink-0 bg-neutral-100"
+        className="w-full h-full"
+      />
+      <span className="flex-1 min-w-0">
+        <span className="block text-sm text-black truncate">{product.name}</span>
+        {product.price != null && <span className="block text-sm text-neutral-600">{formatPrice(product.price)}</span>}
+      </span>
+      <span className="shrink-0 text-xs font-medium bg-black text-white px-3 py-2 rounded-md">Shop now</span>
+    </Link>
+  );
+}
+
+/**
+ * Full-screen player for the home-page reels. Arrow keys / swipe move between videos, Esc closes.
+ * Uploaded videos play here; Instagram reels use Instagram's own player.
+ */
 export default function ReelViewer({ reels, index, onIndexChange, onClose }) {
   const videoRef = useRef(null);
   const touchStart = useRef(null);
@@ -19,7 +48,8 @@ export default function ReelViewer({ reels, index, onIndexChange, onClose }) {
 
   const reel = reels[index];
   const count = reels.length;
-  const hasVideo = Boolean(reel?.videoUrl);
+  const instagram = isInstagramReel(reel);
+  const hasVideo = Boolean(reel?.videoUrl) && !instagram;
   const failed = failedId !== null && failedId === reel?.id;
 
   const go = useCallback((step) => {
@@ -97,19 +127,93 @@ export default function ReelViewer({ reels, index, onIndexChange, onClose }) {
 
   const sideButton = 'hidden md:flex absolute top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/15 hover:bg-white/30 text-white items-center justify-center transition-colors cursor-pointer';
   const product = reel.product;
+  const sideButtons = count > 1 && (
+    <>
+      <button type="button" onClick={() => go(-1)} aria-label="Previous video" className={cn(sideButton, 'left-6 pointer-events-auto')}>
+        <ChevronLeft size={22} />
+      </button>
+      <button type="button" onClick={() => go(1)} aria-label="Next video" className={cn(sideButton, 'right-6 pointer-events-auto')}>
+        <ChevronRight size={22} />
+      </button>
+    </>
+  );
+  const closeButton = (
+    <button
+      type="button"
+      onClick={onClose}
+      aria-label="Close video"
+      className="absolute top-3 right-3 md:top-5 md:right-5 z-20 w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center cursor-pointer"
+    >
+      <X size={22} />
+    </button>
+  );
+
+  if (instagram) {
+    const link = parseInstagramUrl(reel.videoUrl)?.url;
+    const phoneArrow = 'md:hidden w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center cursor-pointer';
+    return (
+      <div className="fixed inset-0 z-[60] bg-black/90 sf-fade-in" role="dialog" aria-modal="true" aria-label="Instagram reel">
+        <div className="absolute inset-0" onClick={onClose} />
+        {closeButton}
+
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-0 md:p-6">
+          <div
+            className="relative pointer-events-auto h-full md:h-[min(88vh,820px)] w-full md:w-[440px] md:rounded-2xl overflow-hidden bg-neutral-950 flex flex-col"
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+            data-reel-source="instagram"
+          >
+            {/* Top: counter, phone arrows, open on Instagram */}
+            <div className="shrink-0 flex items-center gap-2 p-3 pr-14 md:pr-3 text-white">
+              {count > 1 && (
+                <button type="button" onClick={() => go(-1)} aria-label="Previous video" className={phoneArrow}>
+                  <ChevronLeft size={18} />
+                </button>
+              )}
+              <span className="text-xs tabular-nums">{index + 1} / {count}</span>
+              {count > 1 && (
+                <button type="button" onClick={() => go(1)} aria-label="Next video" className={phoneArrow}>
+                  <ChevronRight size={18} />
+                </button>
+              )}
+              {link && (
+                <a
+                  href={link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-auto inline-flex items-center gap-1.5 text-xs text-white/85 hover:text-white"
+                >
+                  <InstagramIcon size={14} /> Open in Instagram <ExternalLink size={12} />
+                </a>
+              )}
+            </div>
+
+            {/* Instagram's player: scrolls when it is taller than the screen */}
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col px-3">
+              <div className="my-auto py-2">
+                <InstagramEmbed key={reel.id} url={reel.videoUrl} />
+              </div>
+            </div>
+
+            {/* Bottom: caption and product */}
+            {(reel.title || product) && (
+              <div className="shrink-0 p-3 pt-2">
+                {reel.title && <p className="text-white text-sm mb-2.5 line-clamp-2">{reel.title}</p>}
+                {product && <ProductLink product={product} onClose={onClose} />}
+              </div>
+            )}
+          </div>
+
+          {sideButtons}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/90 sf-fade-in" role="dialog" aria-modal="true" aria-label="Video">
       <div className="absolute inset-0" onClick={onClose} />
-
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label="Close video"
-        className="absolute top-3 right-3 md:top-5 md:right-5 z-20 w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center cursor-pointer"
-      >
-        <X size={22} />
-      </button>
+      {closeButton}
 
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-0 md:p-6">
         <div
@@ -184,25 +288,7 @@ export default function ReelViewer({ reels, index, onIndexChange, onClose }) {
           {(reel.title || product) && (
             <div className="absolute inset-x-0 bottom-0 p-3 pt-10 bg-gradient-to-t from-black/70 to-transparent">
               {reel.title && <p className="text-white text-sm mb-3 line-clamp-2">{reel.title}</p>}
-              {product && (
-                <Link
-                  to={`/product/${product.slug}`}
-                  onClick={onClose}
-                  className="flex items-center gap-3 bg-white rounded-xl p-2 pr-3 hover:bg-neutral-100 transition-colors"
-                >
-                  <SmartImage
-                    src={product.image || FALLBACK_IMAGE}
-                    alt=""
-                    containerClassName="w-12 h-14 rounded-md overflow-hidden shrink-0 bg-neutral-100"
-                    className="w-full h-full"
-                  />
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-sm text-black truncate">{product.name}</span>
-                    {product.price != null && <span className="block text-sm text-neutral-600">{formatPrice(product.price)}</span>}
-                  </span>
-                  <span className="shrink-0 text-xs font-medium bg-black text-white px-3 py-2 rounded-md">Shop now</span>
-                </Link>
-              )}
+              {product && <ProductLink product={product} onClose={onClose} />}
             </div>
           )}
 
@@ -215,16 +301,7 @@ export default function ReelViewer({ reels, index, onIndexChange, onClose }) {
           )}
         </div>
 
-        {count > 1 && (
-          <>
-            <button type="button" onClick={() => go(-1)} aria-label="Previous video" className={cn(sideButton, 'left-6 pointer-events-auto')}>
-              <ChevronLeft size={22} />
-            </button>
-            <button type="button" onClick={() => go(1)} aria-label="Next video" className={cn(sideButton, 'right-6 pointer-events-auto')}>
-              <ChevronRight size={22} />
-            </button>
-          </>
-        )}
+        {sideButtons}
       </div>
     </div>
   );

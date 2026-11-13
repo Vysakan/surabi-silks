@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  AlertCircle, ArrowLeft, ArrowRight, Camera, Edit, Eye, EyeOff, Film, Plus, Search, Trash2, Upload, X,
+  AlertCircle, ArrowLeft, ArrowRight, Camera, Check, Edit, ExternalLink, Eye, EyeOff, Film, Plus, Search, Trash2, Upload, X,
 } from 'lucide-react';
 import * as reelService from '@/services/reelService';
 import * as productService from '@/services/productService';
@@ -14,17 +14,23 @@ import Input from '@/components/ui/Input';
 import SmartImage from '@/components/ui/SmartImage';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import InstagramIcon from '@/components/ui/InstagramIcon';
+import InstagramEmbed from '@/components/storefront/InstagramEmbed';
+import { isInstagramAddress, isInstagramReel, parseInstagramUrl } from '@/lib/instagram';
 import { cn } from '@/lib/cn';
 
 const VIDEO_TYPES = ['video/mp4', 'video/webm'];
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
-const PAGE_LINK = /^https?:\/\/([a-z0-9-]+\.)*(instagram\.com|instagr\.am|youtube\.com|youtu\.be|facebook\.com|fb\.watch)(\/|$)/i;
+const PAGE_LINK = /^https?:\/\/([a-z0-9-]+\.)*(youtube\.com|youtu\.be|facebook\.com|fb\.watch)(\/|$)/i;
+const INSTAGRAM_HELP = 'On Instagram, open the reel, tap Share (or \u2022\u2022\u2022) > Copy link, and paste it here. The account must be public.';
 
 function emptyForm(sortOrder = 0) {
   return {
     id: null,
+    source: 'video', // 'video' = uploaded file or video link, 'instagram' = Instagram reel link
     title: '',
     videoUrl: '',
+    instagramUrl: '',
     coverUrl: '',
     product: null,
     sortOrder,
@@ -114,11 +120,58 @@ function ProductPicker({ value, onChange, error }) {
   );
 }
 
+/** Instagram link box with a live preview of the reel. */
+function InstagramField({ value, onChange, error }) {
+  const parsed = parseInstagramUrl(value);
+  return (
+    <div>
+      <Input
+        label={<>Instagram reel link <span className="text-red-500">*</span></>}
+        placeholder="https://www.instagram.com/reel/..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        error={error}
+        inputMode="url"
+        autoComplete="off"
+      />
+      {!error && <p className="text-xs text-neutral-500 mt-1.5">{INSTAGRAM_HELP}</p>}
+      {parsed && (
+        <div className="mt-3">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <span className="inline-flex items-center gap-1.5 text-xs text-green-700">
+              <Check size={14} /> Reel link recognised. Preview:
+            </span>
+            <a
+              href={parsed.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-primary-600 hover:underline"
+            >
+              Open on Instagram <ExternalLink size={12} />
+            </a>
+          </div>
+          <div className="max-h-[480px] overflow-y-auto rounded-xl bg-neutral-100 p-2">
+            <InstagramEmbed key={parsed.url} url={parsed.url} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ReelTile({ reel, index, total, onEdit, onToggle, onMove, onDelete, busy }) {
+  const instagram = isInstagramReel(reel);
   return (
     <div className={cn('bg-white border border-neutral-100 rounded-xl overflow-hidden flex flex-col', !reel.isActive && 'opacity-70')}>
       <button type="button" onClick={onEdit} className="relative aspect-[9/16] bg-neutral-100 block" title="Edit">
-        <SmartImage src={reel.coverUrl || FALLBACK_IMAGE} alt="" containerClassName="absolute inset-0" className="w-full h-full" />
+        {reel.coverUrl || !instagram ? (
+          <SmartImage src={reel.coverUrl || FALLBACK_IMAGE} alt="" containerClassName="absolute inset-0" className="w-full h-full" />
+        ) : (
+          <span className="absolute inset-0 bg-[linear-gradient(160deg,#f9ce34_0%,#ee2a7b_45%,#6228d7_100%)] flex flex-col items-center justify-center gap-1 text-white text-[11px] text-center px-2">
+            <InstagramIcon size={26} />
+            No cover picture
+          </span>
+        )}
         <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[11px] font-medium bg-white/90 text-neutral-800">
           #{index + 1}
         </span>
@@ -130,7 +183,11 @@ function ReelTile({ reel, index, total, onEdit, onToggle, onMove, onDelete, busy
         >
           {reel.isActive ? 'Showing' : 'Hidden'}
         </span>
-        {!reel.videoUrl && (
+        {instagram ? (
+          <span className="absolute left-2 bottom-2 flex items-center gap-1 px-2 py-1 rounded-full bg-white/90 text-neutral-800 text-[11px] font-medium">
+            <InstagramIcon size={12} /> Instagram
+          </span>
+        ) : !reel.videoUrl && (
           <span className="absolute inset-x-2 bottom-2 flex items-center gap-1 px-2 py-1 rounded bg-red-600 text-white text-[11px]">
             <AlertCircle size={12} /> No video
           </span>
@@ -168,7 +225,7 @@ function ReelTile({ reel, index, total, onEdit, onToggle, onMove, onDelete, busy
 export default function ReelsPage() {
   const addToast = useUIStore((s) => s.addToast);
   const [reels, setReels] = useState([]);
-  const [limits, setLimits] = useState({ maxVideoMb: 50, maxImageMb: 5 });
+  const [limits, setLimits] = useState({ maxVideoMb: 100, maxImageMb: 5 });
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -190,7 +247,7 @@ export default function ReelsPage() {
     try {
       const data = await reelService.adminList();
       setReels(data.items || []);
-      setLimits({ maxVideoMb: data.maxVideoMb || 50, maxImageMb: data.maxImageMb || 5 });
+      setLimits({ maxVideoMb: data.maxVideoMb || 100, maxImageMb: data.maxImageMb || 5 });
       setLoadError('');
     } catch (error) {
       setLoadError(getErrorMessage(error, 'Could not load the reels.'));
@@ -212,7 +269,7 @@ export default function ReelsPage() {
     setCoverFile(null);
     setCoverPreview('');
     setUploadProgress(null);
-    setUseLink(Boolean(form.videoUrl) && !form.videoUrl.includes('/uploads/'));
+    setUseLink(form.source === 'video' && Boolean(form.videoUrl) && !form.videoUrl.includes('/uploads/'));
   };
 
   const startNew = () => {
@@ -220,15 +277,25 @@ export default function ReelsPage() {
     openForm(emptyForm(next));
   };
 
-  const startEdit = (reel) => openForm({
-    id: reel.id,
-    title: reel.title || '',
-    videoUrl: reel.videoUrl || '',
-    coverUrl: reel.coverUrl || '',
-    product: reel.product || null,
-    sortOrder: reel.sortOrder ?? 0,
-    isActive: reel.isActive,
-  });
+  const startEdit = (reel) => {
+    const instagram = isInstagramReel(reel);
+    openForm({
+      id: reel.id,
+      source: instagram ? 'instagram' : 'video',
+      title: reel.title || '',
+      videoUrl: instagram ? '' : reel.videoUrl || '',
+      instagramUrl: instagram ? reel.videoUrl || '' : '',
+      coverUrl: reel.coverUrl || '',
+      product: reel.product || null,
+      sortOrder: reel.sortOrder ?? 0,
+      isActive: reel.isActive,
+    });
+  };
+
+  const setSource = (source) => {
+    setEditing((prev) => ({ ...prev, source }));
+    setErrors((prev) => ({ ...prev, videoUrl: undefined, coverUrl: undefined }));
+  };
 
   const setField = (field, value) => {
     setEditing((prev) => ({ ...prev, [field]: value }));
@@ -303,12 +370,22 @@ export default function ReelsPage() {
 
   const validate = () => {
     const e = {};
-    const link = editing.videoUrl.trim();
-    if (!videoFile && !link) e.videoUrl = 'Please upload the reel video';
-    else if (!videoFile && PAGE_LINK.test(link)) {
-      e.videoUrl = 'Instagram, YouTube and Facebook links cannot be played on the website. Download the video and upload the file instead.';
-    } else if (!videoFile && !/^(https?:\/\/|\/)\S+$/i.test(link)) e.videoUrl = 'Enter a link that starts with https://';
-    if (!coverFile && !editing.coverUrl) e.coverUrl = 'Please upload a cover picture';
+    if (editing.source === 'instagram') {
+      const link = editing.instagramUrl.trim();
+      if (!link) e.videoUrl = 'Paste the link to the Instagram reel';
+      else if (!parseInstagramUrl(link)) {
+        e.videoUrl = 'This is not a link to one Instagram reel. It should look like https://www.instagram.com/reel/ABC123/';
+      }
+    } else {
+      const link = editing.videoUrl.trim();
+      if (!videoFile && !link) e.videoUrl = 'Please upload the reel video';
+      else if (!videoFile && isInstagramAddress(link)) {
+        e.videoUrl = 'This is an Instagram link. Choose \u201cInstagram reel\u201d at the top of this form instead.';
+      } else if (!videoFile && PAGE_LINK.test(link)) {
+        e.videoUrl = 'YouTube and Facebook links cannot be played on the website. Upload the video file instead.';
+      } else if (!videoFile && !/^(https?:\/\/|\/)\S+$/i.test(link)) e.videoUrl = 'Enter a link that starts with https://';
+      if (!coverFile && !editing.coverUrl) e.coverUrl = 'Please upload a cover picture';
+    }
     if (editing.title.trim().length > 150) e.title = 'Keep the caption under 150 characters';
     const order = Number(editing.sortOrder);
     if (!Number.isInteger(order) || order < 0) e.sortOrder = 'Use a whole number, 0 or more';
@@ -320,8 +397,11 @@ export default function ReelsPage() {
     if (!editing || !validate()) return;
     setSaving(true);
     try {
+      const instagram = editing.source === 'instagram';
       let { videoUrl, coverUrl } = editing;
-      if (videoFile) {
+      if (instagram) {
+        videoUrl = parseInstagramUrl(editing.instagramUrl).url;
+      } else if (videoFile) {
         setUploadProgress(0);
         videoUrl = await reelService.uploadVideo(videoFile, setUploadProgress);
         // Keep the uploaded URL so trying again after an error does not upload the file twice.
@@ -338,7 +418,7 @@ export default function ReelsPage() {
       const payload = {
         title: editing.title.trim() || null,
         videoUrl: videoUrl.trim(),
-        coverUrl,
+        coverUrl: coverUrl || null,
         productId: editing.product?.id ?? null,
         sortOrder: Number(editing.sortOrder) || 0,
         isActive: editing.isActive,
@@ -419,7 +499,8 @@ export default function ReelsPage() {
         <div>
           <h1 className="text-2xl font-semibold text-neutral-900">Reels</h1>
           <p className="text-sm text-neutral-500 mt-1">
-            Short videos shown in &ldquo;See it in action&rdquo; on the home page. {showingCount} showing on the website.
+            Videos shown in &ldquo;See it in action&rdquo; on the home page: upload a video or paste an Instagram reel link.
+            {' '}{showingCount} showing on the website.
           </p>
         </div>
         <Button onClick={startNew} disabled={Boolean(loadError)}>
@@ -476,100 +557,132 @@ export default function ReelsPage() {
             </div>
 
             <div className="space-y-5">
-              {/* Video */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm font-medium text-neutral-700">Video <span className="text-red-500">*</span></span>
+              {/* Where the video comes from */}
+              <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-neutral-100" role="group" aria-label="Video source">
+                {[
+                  { value: 'video', label: 'Upload a video', icon: Film },
+                  { value: 'instagram', label: 'Instagram reel', icon: InstagramIcon },
+                ].map((option) => (
                   <button
+                    key={option.value}
                     type="button"
-                    onClick={() => { setUseLink(!useLink); setErrors((p) => ({ ...p, videoUrl: undefined })); }}
-                    className="text-xs text-primary-600 hover:underline"
+                    onClick={() => setSource(option.value)}
+                    aria-pressed={editing.source === option.value}
+                    disabled={saving}
+                    className={cn(
+                      'flex items-center justify-center gap-2 py-2 rounded-md text-sm transition-colors',
+                      editing.source === option.value ? 'bg-white text-neutral-900 font-medium shadow-sm' : 'text-neutral-600 hover:text-neutral-900'
+                    )}
                   >
-                    {useLink ? 'Upload a file instead' : 'Use a video link instead'}
+                    <option.icon size={15} /> {option.label}
                   </button>
-                </div>
-                {useLink && !videoFile ? (
-                  <Input
-                    placeholder="https://.../video.mp4"
-                    value={editing.videoUrl}
-                    onChange={(e) => setField('videoUrl', e.target.value)}
-                    error={errors.videoUrl}
-                  />
-                ) : (
-                  <>
-                    <div className="flex items-start gap-4">
-                      {shownVideo ? (
-                        <div className="relative w-32 aspect-[9/16] rounded-lg overflow-hidden bg-black shrink-0">
-                          <video
-                            ref={previewVideoRef}
-                            src={shownVideo}
-                            controls
-                            playsInline
-                            muted
-                            preload="metadata"
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={clearVideo}
-                            className="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center"
-                            aria-label="Remove video"
-                          >
-                            <X size={12} />
-                          </button>
+                ))}
+              </div>
+
+              {editing.source === 'instagram' ? (
+                <InstagramField
+                  value={editing.instagramUrl}
+                  onChange={(value) => setField('instagramUrl', value)}
+                  error={errors.videoUrl}
+                />
+              ) : (
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-sm font-medium text-neutral-700">Video <span className="text-red-500">*</span></span>
+                    <button
+                      type="button"
+                      onClick={() => { setUseLink(!useLink); setErrors((p) => ({ ...p, videoUrl: undefined })); }}
+                      className="text-xs text-primary-600 hover:underline"
+                    >
+                      {useLink ? 'Upload a file instead' : 'Use a video link instead'}
+                    </button>
+                  </div>
+                  {useLink && !videoFile ? (
+                    <Input
+                      placeholder="https://.../video.mp4"
+                      value={editing.videoUrl}
+                      onChange={(e) => setField('videoUrl', e.target.value)}
+                      error={errors.videoUrl}
+                    />
+                  ) : (
+                    <>
+                      <div className="flex items-start gap-4">
+                        {shownVideo ? (
+                          <div className="relative w-32 aspect-[9/16] rounded-lg overflow-hidden bg-black shrink-0">
+                            <video
+                              ref={previewVideoRef}
+                              src={shownVideo}
+                              controls
+                              playsInline
+                              muted
+                              preload="metadata"
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={clearVideo}
+                              className="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center"
+                              aria-label="Remove video"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className={cn(
+                            'w-32 aspect-[9/16] rounded-lg border-2 border-dashed flex items-center justify-center shrink-0',
+                            errors.videoUrl ? 'border-red-300 bg-red-50' : 'border-neutral-200'
+                          )}>
+                            <Film size={24} className="text-neutral-300" />
+                          </div>
+                        )}
+                        <div className="space-y-2 min-w-0">
+                          <label className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-neutral-300 rounded-lg cursor-pointer hover:bg-neutral-50">
+                            <Upload size={14} /> {shownVideo ? 'Replace video' : 'Upload video'}
+                            <input
+                              type="file"
+                              accept="video/mp4,video/webm,.mp4,.webm"
+                              className="hidden"
+                              onChange={(e) => { pickVideo(e.target.files?.[0]); e.target.value = ''; }}
+                            />
+                          </label>
+                          <p className="text-xs text-neutral-500">
+                            MP4, up to {limits.maxVideoMb} MB. Upright (9:16) videos look best. Reels you download from Instagram are already MP4.
+                          </p>
+                          {videoFile && (
+                            <button
+                              type="button"
+                              onClick={takeFrameAsCover}
+                              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:underline"
+                            >
+                              <Camera size={13} /> Use the frame showing as the cover
+                            </button>
+                          )}
                         </div>
-                      ) : (
-                        <div className={cn(
-                          'w-32 aspect-[9/16] rounded-lg border-2 border-dashed flex items-center justify-center shrink-0',
-                          errors.videoUrl ? 'border-red-300 bg-red-50' : 'border-neutral-200'
-                        )}>
-                          <Film size={24} className="text-neutral-300" />
+                      </div>
+                      {errors.videoUrl && <p className="text-sm text-error mt-1.5">{errors.videoUrl}</p>}
+                      {uploadProgress !== null && (
+                        <div className="mt-3">
+                          <div className="flex justify-between text-xs text-neutral-500 mb-1">
+                            <span>Uploading video...</span>
+                            <span>{uploadProgress}%</span>
+                          </div>
+                          <div className="h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-primary-500 transition-all" style={{ width: `${uploadProgress}%` }} />
+                          </div>
                         </div>
                       )}
-                      <div className="space-y-2 min-w-0">
-                        <label className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-neutral-300 rounded-lg cursor-pointer hover:bg-neutral-50">
-                          <Upload size={14} /> {shownVideo ? 'Replace video' : 'Upload video'}
-                          <input
-                            type="file"
-                            accept="video/mp4,video/webm,.mp4,.webm"
-                            className="hidden"
-                            onChange={(e) => { pickVideo(e.target.files?.[0]); e.target.value = ''; }}
-                          />
-                        </label>
-                        <p className="text-xs text-neutral-500">
-                          MP4, up to {limits.maxVideoMb} MB. Upright (9:16) videos look best. Reels you download from Instagram are already MP4.
-                        </p>
-                        {videoFile && (
-                          <button
-                            type="button"
-                            onClick={takeFrameAsCover}
-                            className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:underline"
-                          >
-                            <Camera size={13} /> Use the frame showing as the cover
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    {errors.videoUrl && <p className="text-sm text-error mt-1.5">{errors.videoUrl}</p>}
-                    {uploadProgress !== null && (
-                      <div className="mt-3">
-                        <div className="flex justify-between text-xs text-neutral-500 mb-1">
-                          <span>Uploading video...</span>
-                          <span>{uploadProgress}%</span>
-                        </div>
-                        <div className="h-1.5 bg-neutral-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-primary-500 transition-all" style={{ width: `${uploadProgress}%` }} />
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
+                    </>
+                  )}
+                </div>
+              )}
 
               {/* Cover */}
               <div>
                 <span className="block text-sm font-medium text-neutral-700 mb-1.5">
-                  Cover picture <span className="text-red-500">*</span>
+                  Cover picture{' '}
+                  {editing.source === 'instagram'
+                    ? <span className="font-normal text-neutral-500">(recommended)</span>
+                    : <span className="text-red-500">*</span>}
                 </span>
                 <div className="flex items-start gap-4">
                   {shownCover ? (
@@ -603,7 +716,10 @@ export default function ReelsPage() {
                       />
                     </label>
                     <p className="text-xs text-neutral-500">
-                      Shown before the video plays. JPG, PNG or WebP, up to {limits.maxImageMb} MB, upright (9:16).
+                      {editing.source === 'instagram'
+                        ? 'Instagram does not share its cover picture with other websites. Upload a screenshot of the reel; without one, the card shows the caption on a colour background.'
+                        : 'Shown before the video plays.'}
+                      {' '}JPG, PNG or WebP, up to {limits.maxImageMb} MB, upright (9:16).
                     </p>
                   </div>
                 </div>

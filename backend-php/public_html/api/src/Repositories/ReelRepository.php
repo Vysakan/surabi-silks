@@ -4,8 +4,13 @@ namespace App\Repositories;
 
 use App\Support\Db;
 use App\Support\Fmt;
+use App\Support\Instagram;
 
-/** Home-page reels: short videos with a cover picture, optionally linked to a product. */
+/**
+ * Home-page reels: short videos with a cover picture, optionally linked to a product.
+ * video_url holds an uploaded video, a video file link or an Instagram reel link.
+ * cover_url is '' for an Instagram reel without a cover picture.
+ */
 final class ReelRepository
 {
     private const SELECT = 'SELECT r.*, p.name AS product_name, p.slug AS product_slug,
@@ -39,7 +44,7 @@ final class ReelRepository
         $id = Db::insert(
             'INSERT INTO reels (title, video_url, cover_url, product_id, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?)',
             [
-                Fmt::orNull($d['title'] ?? null), $d['videoUrl'], $d['coverUrl'],
+                Fmt::orNull($d['title'] ?? null), $d['videoUrl'], (string) ($d['coverUrl'] ?? ''),
                 Fmt::orNull($d['productId'] ?? null), $d['sortOrder'] ?? 0, !empty($d['isActive']),
             ]
         );
@@ -60,6 +65,8 @@ final class ReelRepository
                 $value = $d[$key];
                 if ($key === 'title') {
                     $value = Fmt::orNull($value);
+                } elseif ($key === 'coverUrl') {
+                    $value = (string) ($value ?? '');
                 } elseif ($key === 'isActive') {
                     $value = (bool) $value;
                 }
@@ -90,11 +97,13 @@ final class ReelRepository
                 'image' => $row['product_image'],
             ];
         }
+        $instagram = Instagram::canonical($row['video_url']) !== null;
         return [
             'id' => (int) $row['id'],
             'title' => $row['title'],
+            'source' => $instagram ? 'instagram' : 'video',
             'videoUrl' => $row['video_url'],
-            'coverUrl' => $row['cover_url'],
+            'coverUrl' => (string) ($row['cover_url'] ?? '') !== '' ? $row['cover_url'] : null,
             'productId' => Fmt::intOrNull($row['product_id']),
             'product' => $product,
             'sortOrder' => (int) $row['sort_order'],

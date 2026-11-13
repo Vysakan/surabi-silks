@@ -41,7 +41,7 @@ export default function CollectionLinks({ eyebrow = 'Browse', title = 'Find your
                     <SmartImage
                       src={cat.image || FALLBACK_IMAGE}
                       alt=""
-                      containerClassName="lg:hidden w-14 h-14 shrink-0 bg-neutral-200"
+                      containerClassName="lg:hidden w-14 h-14 shrink-0 bg-neutral-200 rounded-lg"
                       className="w-full h-full"
                     />
                     <span
@@ -64,7 +64,7 @@ export default function CollectionLinks({ eyebrow = 'Browse', title = 'Find your
         </div>
 
         <div className="hidden lg:block">
-          <Link to={`/shop/${active.slug}`} className="block relative aspect-[4/5] overflow-hidden bg-neutral-200">
+          <Link to={`/shop/${active.slug}`} className="block relative aspect-[var(--tile-aspect)] overflow-hidden rounded-[var(--radius-card)] bg-neutral-200">
             {categories.map((cat) => (
               <SmartImage
                 key={cat.id}

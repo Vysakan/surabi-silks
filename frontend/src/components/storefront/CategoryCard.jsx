@@ -4,11 +4,11 @@ import { FALLBACK_IMAGE } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 
 /** Collection tile: rounded photo with the category name on a small white label. */
-export default function CategoryCard({ category, to, className, aspect = 'aspect-square' }) {
+export default function CategoryCard({ category, to, className, aspect = 'aspect-[var(--tile-aspect)]' }) {
   return (
     <Link
       to={to || `/shop/${category.slug}`}
-      className={cn('group relative block overflow-hidden rounded-2xl bg-neutral-100', aspect, className)}
+      className={cn('group relative block overflow-hidden rounded-[var(--radius-card)] bg-neutral-100', aspect, className)}
       draggable={false}
     >
       <SmartImage

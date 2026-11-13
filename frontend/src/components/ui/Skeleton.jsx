@@ -9,7 +9,7 @@ export function Skeleton({ className }) {
 export function SkeletonProductCard() {
   return (
     <div className="space-y-3">
-      <Skeleton className="aspect-[3/4] w-full rounded-[var(--radius-card)]" />
+      <Skeleton className="aspect-[var(--product-aspect)] w-full rounded-[var(--radius-card)]" />
       <Skeleton className="h-4 w-3/4" />
       <Skeleton className="h-4 w-1/2" />
       <Skeleton className="h-5 w-1/3" />

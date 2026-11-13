@@ -40,6 +40,13 @@
   --radius-input: 0.375rem;
 }
 
+/* Card shapes (width / height). The customer site sets its own values in .storefront below;
+   these are the fallbacks for anywhere else. */
+:root {
+  --tile-aspect: 4 / 5;
+  --product-aspect: 2 / 3;
+}
+
 body {
   @apply bg-white text-neutral-800 antialiased;
   font-family: var(--font-sans);
@@ -194,8 +201,9 @@ body {
 /* ------------------------------------------------------------------
    Storefront look (customer-facing pages only).
    A clean black-and-white style: inside .storefront every "primary"
-   colour becomes black/grey, product images are square-cornered and
-   headings use the sans-serif font. The admin dashboard is untouched.
+   colour becomes black/grey, photo cards have rounded corners (like
+   "Shop by collection") and headings use the sans-serif font.
+   The admin dashboard is untouched.
    ------------------------------------------------------------------ */
 .storefront {
   --color-primary-50: #f4f4f4;
@@ -213,7 +221,13 @@ body {
   --color-surface: #f6f5f3;
 
   --font-heading: var(--font-sans);
-  --radius-card: 0;
+
+  /* Photo cards: product cards, collection tiles, search results, wishlist.
+     Change these three values to restyle every card at once. */
+  --radius-card: 1rem;        /* rounded corners, same as "Shop by collection" */
+  --tile-aspect: 4 / 5;       /* collection tiles: width / height (was 1 / 1) */
+  --product-aspect: 2 / 3;    /* product cards: width / height (was 3 / 4) */
+
   --radius-button: 0.375rem;
   --radius-input: 0.375rem;
 

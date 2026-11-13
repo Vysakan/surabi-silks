@@ -1,4 +1,5 @@
 import { reels as initialReels } from '@/data/reels';
+import { parseInstagramUrl } from '@/lib/instagram';
 
 // Demo mode: reels live in memory only and are lost when the page reloads.
 const delay = (ms = 300) => new Promise((r) => setTimeout(r, ms));
@@ -13,16 +14,18 @@ export async function getActive() {
 
 export async function adminList() {
   await delay();
-  return { items: sorted(_reels), maxVideoMb: 50, maxImageMb: 5 };
+  return { items: sorted(_reels), maxVideoMb: 100, maxImageMb: 5 };
 }
 
 export async function create(data) {
   await delay();
+  const instagram = parseInstagramUrl(data.videoUrl);
   const reel = {
     id: `reel-${Date.now()}`,
     title: data.title || null,
-    videoUrl: data.videoUrl,
-    coverUrl: data.coverUrl,
+    source: instagram ? 'instagram' : 'video',
+    videoUrl: instagram ? instagram.url : data.videoUrl,
+    coverUrl: data.coverUrl || null,
     productId: data.productId ?? null,
     product: data.product ?? null,
     sortOrder: data.sortOrder ?? 0,
@@ -37,7 +40,12 @@ export async function update(id, changes) {
   await delay();
   const index = _reels.findIndex((r) => r.id === id);
   if (index === -1) return null;
-  _reels[index] = { ..._reels[index], ...changes };
+  const next = { ..._reels[index], ...changes };
+  const instagram = parseInstagramUrl(next.videoUrl);
+  next.source = instagram ? 'instagram' : 'video';
+  if (instagram) next.videoUrl = instagram.url;
+  next.coverUrl = next.coverUrl || null;
+  _reels[index] = next;
   return _reels[index];
 }
 

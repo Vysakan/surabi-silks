@@ -77,7 +77,7 @@ export default function CartDrawer() {
             <ul className="divide-y divide-neutral-200">
               {items.map((item) => (
                 <li key={item.variantId} className="flex gap-4 py-5">
-                  <div className="w-20 aspect-[3/4] bg-neutral-100 shrink-0">
+                  <div className="w-20 aspect-[3/4] bg-neutral-100 shrink-0 rounded-lg overflow-hidden">
                     <SmartImage src={item.image || FALLBACK_IMAGE} alt={item.productName} containerClassName="w-full h-full" className="w-full h-full" />
                   </div>
                   <div className="flex-1 min-w-0">

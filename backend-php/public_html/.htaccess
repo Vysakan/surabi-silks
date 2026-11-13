@@ -1,23 +1,32 @@
-# Surabi Silks - Hostinger public_html/.htaccess
-# Serves the React build (index.html + assets) and routes /api/v1/* to the PHP backend.
+# Surabi Silks API - public_html/surabhiwebapi/.htaccess
+# https://surabhiwebapi.semicoloninnovations.in/api/v1/... is answered by api/index.php.
+# This folder holds only the API: there is no website here.
 
 Options -Indexes
-DirectoryIndex index.html
+
+# Reel videos can be up to 100 MB (config.php > upload > max_video_size_mb).
+# PHP must accept a little more than that. Hostinger runs LiteSpeed, which reads these lines.
+# You can set the same values in hPanel > Advanced > PHP Configuration > PHP options instead.
+<IfModule LiteSpeed>
+  php_value upload_max_filesize 128M
+  php_value post_max_size 128M
+  php_value max_input_time 300
+  php_value max_execution_time 300
+</IfModule>
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
 
-  # API -> PHP backend
-  RewriteRule ^api/v1(/.*)?$ api/index.php [L,QSA]
+  # Always HTTPS: the login cookie only works over HTTPS.
+  RewriteCond %{HTTPS} off
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
   # Never expose backend internals or config
-  RewriteRule ^api/(src|storage)(/|$) - [F,L]
-  RewriteRule ^api/config(\.example)?\.php$ - [F,L]
+  RewriteRule ^api/(src|storage|bin)(/|$) - [F,L]
+  RewriteRule ^api/config[^/]*\.php$ - [F,L]
 
-  # React Router: real files are served as-is, everything else gets index.html
-  RewriteCond %{REQUEST_FILENAME} -f [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
-  RewriteRule ^ - [L]
-  RewriteRule ^ index.html [L]
+  # API -> PHP backend
+  RewriteRule ^api/v1(/.*)?$ api/index.php [L,QSA]
 </IfModule>

@@ -37,8 +37,9 @@ return [
         'dir'              => __DIR__ . '/../uploads',
         'url_prefix'       => 'https://surabhiwebapi.semicoloninnovations.in/uploads',
         'max_file_size_mb' => 5,
-        // Reel videos (MP4). PHP's own limits (upload_max_filesize, post_max_size in hPanel) must allow this too.
-        'max_video_size_mb' => 50,
+        // Reel videos (MP4). PHP's own limits must allow this too: upload_max_filesize and
+        // post_max_size of 128M or more (hPanel > Advanced > PHP Configuration, or the .htaccess file).
+        'max_video_size_mb' => 100,
     ],
 
     // Links in account emails (password reset, admin invites) open the website. No slash at the end.

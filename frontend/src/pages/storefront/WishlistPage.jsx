@@ -79,13 +79,13 @@ export default function WishlistPage() {
           actionLink="/shop"
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-3 md:gap-x-5 gap-y-8">
           {products.map(({ product, variant }) => (
-            <div key={variant.id} className="border border-neutral-100 rounded-xl overflow-hidden group">
-              <Link to={`/product/${product.slug}`} className="block aspect-[3/4] relative overflow-hidden bg-neutral-100">
-                <SmartImage src={variant.images[0]} alt={product.name} containerClassName="w-full h-full" className="w-full h-full group-hover:scale-105 transition-transform duration-500" />
+            <div key={variant.id} className="group min-w-0">
+              <Link to={`/product/${product.slug}`} className="block aspect-[var(--product-aspect)] relative overflow-hidden rounded-[var(--radius-card)] bg-neutral-100">
+                <SmartImage src={variant.images[0]} alt={product.name} containerClassName="w-full h-full" className="w-full h-full group-hover:scale-[1.03] transition-transform duration-700" />
               </Link>
-              <div className="p-4">
+              <div className="pt-3">
                 <p className="text-xs text-neutral-400 uppercase tracking-wider">{product.fabric}</p>
                 <h3 className="text-sm font-medium text-neutral-800 mt-1 line-clamp-2">{product.name}</h3>
                 <p className="text-sm font-semibold mt-2">{formatPrice(variant.price)}</p>
@@ -100,8 +100,10 @@ export default function WishlistPage() {
                     {variant.stock === 0 ? 'Sold Out' : 'Move to Cart'}
                   </Button>
                   <button
+                    type="button"
                     onClick={() => removeItem(variant.id)}
-                    className="w-9 h-9 flex items-center justify-center border border-neutral-200 rounded-lg text-neutral-400 hover:text-red-500 hover:border-red-200 transition-colors"
+                    aria-label={`Remove ${product.name} from wishlist`}
+                    className="w-9 h-9 shrink-0 flex items-center justify-center border border-neutral-200 rounded-lg text-neutral-400 hover:text-red-500 hover:border-red-200 transition-colors"
                   >
                     <Trash2 size={14} />
                   </button>

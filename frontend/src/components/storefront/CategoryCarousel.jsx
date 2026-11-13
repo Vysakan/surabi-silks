@@ -33,7 +33,7 @@ export default function CategoryCarousel({ title = 'Shop by collection' }) {
           {loading
             ? Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className={SLIDE}>
-                <Skeleton className="aspect-square rounded-2xl" />
+                <Skeleton className="aspect-[var(--tile-aspect)] rounded-[var(--radius-card)]" />
               </div>
             ))
             : categories.map((cat) => (

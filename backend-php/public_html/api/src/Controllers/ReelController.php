@@ -6,20 +6,23 @@ use App\Http\HttpError;
 use App\Http\Request;
 use App\Repositories\ReelRepository;
 use App\Support\Db;
+use App\Support\Instagram;
 use App\Support\Uploads;
 
 /**
- * Home-page reels ("See it in action"). Shop staff add them in the admin dashboard:
- * upload the video and a cover picture first (POST /reels/videos, POST /reels/covers),
- * then save the reel with the returned URLs.
+ * Home-page reels ("See it in action"). Shop staff add them in the admin dashboard, either
+ *  - an uploaded video: upload the video and a cover picture first (POST /reels/videos,
+ *    POST /reels/covers), then save the reel with the returned URLs, or
+ *  - an Instagram reel: save the reel with its Instagram link as videoUrl. The cover picture
+ *    is optional for these, because Instagram does not share its own cover with other websites.
  */
 final class ReelController
 {
     /** An uploaded file (https://.../uploads/x.mp4) or a site path (/videos/x.mp4). */
     private const MEDIA_URL = '#^(https?://|/)[^\s"\'<>]+$#iD';
 
-    /** Social-media page links are not video files, so a browser cannot play them. */
-    private const PAGE_LINK = '#^https?://([a-z0-9-]+\.)*(instagram\.com|instagr\.am|youtube\.com|youtu\.be|facebook\.com|fb\.watch)(/|$)#i';
+    /** YouTube and Facebook page links are not video files, so a browser cannot play them. */
+    private const PAGE_LINK = '#^https?://([a-z0-9-]+\.)*(youtube\.com|youtu\.be|facebook\.com|fb\.watch)(/|$)#i';
 
     /** Most reels shown on the website. */
     private const PUBLIC_LIMIT = 24;
@@ -54,7 +57,7 @@ final class ReelController
     {
         $d = $req->validated;
         $d['videoUrl'] = self::requireVideo($d['videoUrl'] ?? null);
-        $d['coverUrl'] = self::requireCover($d['coverUrl'] ?? null);
+        $d['coverUrl'] = self::checkCover($d['coverUrl'] ?? null, self::isInstagram($d['videoUrl']));
         self::checkProduct($d['productId'] ?? null);
         return [201, self::guard(function () use ($d) {
             return ReelRepository::create($d);
@@ -69,8 +72,12 @@ final class ReelController
         if (array_key_exists('videoUrl', $d)) {
             $d['videoUrl'] = self::requireVideo($d['videoUrl']);
         }
+        $instagram = self::isInstagram($d['videoUrl'] ?? $existing['videoUrl']);
         if (array_key_exists('coverUrl', $d)) {
-            $d['coverUrl'] = self::requireCover($d['coverUrl']);
+            $d['coverUrl'] = self::checkCover($d['coverUrl'], $instagram);
+        } elseif (!$instagram && (string) ($existing['coverUrl'] ?? '') === '') {
+            // An Instagram reel without a cover is being changed into an uploaded video.
+            throw HttpError::field('coverUrl', 'Please upload a cover picture');
         }
         if (array_key_exists('productId', $d)) {
             self::checkProduct($d['productId']);
@@ -79,8 +86,9 @@ final class ReelController
         $updated = ReelRepository::update($id, $d);
         // Replaced files are deleted when nothing else uses them.
         foreach (['videoUrl', 'coverUrl'] as $key) {
-            if (isset($d[$key]) && $existing[$key] !== $d[$key]) {
-                Uploads::removeIfUnused($existing[$key]);
+            $old = (string) ($existing[$key] ?? '');
+            if (array_key_exists($key, $d) && $old !== '' && $old !== (string) $d[$key]) {
+                Uploads::removeIfUnused($old);
             }
         }
         return [200, $updated];
@@ -91,8 +99,12 @@ final class ReelController
         $id = (int) $req->params['id'];
         $existing = self::mustFind($id);
         ReelRepository::remove($id);
-        Uploads::removeIfUnused($existing['videoUrl']);
-        Uploads::removeIfUnused($existing['coverUrl']);
+        foreach (['videoUrl', 'coverUrl'] as $key) {
+            $old = (string) ($existing[$key] ?? '');
+            if ($old !== '') {
+                Uploads::removeIfUnused($old);
+            }
+        }
         return [204, null];
     }
 
@@ -118,14 +130,22 @@ final class ReelController
 
     // ---- rules ---------------------------------------------------------------
 
+    /** An uploaded video, a video file link, or an Instagram reel link (stored in its standard form). */
     private static function requireVideo($url): string
     {
         $url = is_string($url) ? trim($url) : '';
         if ($url === '') {
-            throw HttpError::field('videoUrl', 'Please upload the reel video');
+            throw HttpError::field('videoUrl', 'Please upload the reel video or paste an Instagram reel link');
+        }
+        $instagram = Instagram::canonical($url);
+        if ($instagram !== null) {
+            return $instagram;
+        }
+        if (Instagram::isInstagramAddress($url)) {
+            throw HttpError::field('videoUrl', 'This is not a link to one Instagram reel. On Instagram, open the reel, tap Share > Copy link and paste that link (it looks like https://www.instagram.com/reel/ABC123/).');
         }
         if (preg_match(self::PAGE_LINK, $url)) {
-            throw HttpError::field('videoUrl', 'Instagram, YouTube and Facebook links cannot be played on the website. Download the video and upload the file instead.');
+            throw HttpError::field('videoUrl', 'YouTube and Facebook links cannot be played on the website. Upload the video file, or use an Instagram reel link.');
         }
         if (!preg_match(self::MEDIA_URL, $url)) {
             throw HttpError::field('videoUrl', 'Upload a video file, or enter a link that starts with https://');
@@ -133,16 +153,25 @@ final class ReelController
         return $url;
     }
 
-    private static function requireCover($url): string
+    /** The cover picture: required for uploaded videos, optional ('' when missing) for Instagram reels. */
+    private static function checkCover($url, bool $optional): string
     {
         $url = is_string($url) ? trim($url) : '';
         if ($url === '') {
+            if ($optional) {
+                return '';
+            }
             throw HttpError::field('coverUrl', 'Please upload a cover picture');
         }
         if (!preg_match(self::MEDIA_URL, $url)) {
             throw HttpError::field('coverUrl', 'The cover must be an uploaded picture');
         }
         return $url;
+    }
+
+    private static function isInstagram($url): bool
+    {
+        return Instagram::canonical(is_string($url) ? $url : null) !== null;
     }
 
     private static function checkProduct($productId): void
@@ -177,7 +206,8 @@ final class ReelController
                 throw new HttpError(
                     503,
                     'SETUP_REQUIRED',
-                    'Reels are not set up in the database yet. Run database/migration-2026-11-reels-hostinger.sql in phpMyAdmin, then try again.'
+                    'Reels are not set up in the database yet. Run database/migration-2026-11-reels-hostinger.sql in phpMyAdmin '
+                        . '(on your own PC: database/migration-2026-11-reels.sql), then try again.'
                 );
             }
             throw $e;

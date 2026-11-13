@@ -106,7 +106,7 @@ final class Uploads
     /** Largest video upload in MB: upload.max_video_size_mb, lowered to what PHP accepts. */
     public static function maxVideoMb(): int
     {
-        return self::cappedMb((int) Config::get('upload.max_video_size_mb', 50));
+        return self::cappedMb((int) Config::get('upload.max_video_size_mb', 100));
     }
 
     private static function cappedMb(int $configured): int
